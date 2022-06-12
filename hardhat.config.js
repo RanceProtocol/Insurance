@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require("solidity-coverage");
+require("@openzeppelin/hardhat-upgrades");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -21,13 +22,55 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+const mnemonic = process.env.MNEMONIC;
 module.exports = {
-  solidity: "0.8.4",
+  solidity: {
+    version: "0.8.4",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
   networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    bsctestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
+    },
+    localhost: {
+      url: `http://localhost:8545`,
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
+      timeout: 150000,
+    },
+    bscmainnet: {
+      url: "https://bsc-dataseed.binance.org",
+      chainId: 56,
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
+    },
+    hardhat: {
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
     },
   },
   gasReporter: {

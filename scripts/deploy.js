@@ -1,29 +1,23 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-const hre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+  const admin = process.env.ADMIN_ADDRESS;
+  const [deployer] = await ethers.getSigners();
+  const RanceTreasury = await ethers.getContractFactory("RanceTreasury");
+  const RanceProtocol = await ethers.getContractFactory("RanceProtocol");
+  const MockERC20 = await ethers.getContractFactory("MockERC20");
+  const mockRance = await MockERC20.deploy("Rance Token", "RANCE");
+  const treasury = await RanceTreasury.deploy(deployer.getAddress());
+  const protocol = await upgrades.deployProxy(
+    RanceProtocol,
+    [treasury.address, process.env.UNISWAP_ROUTER, mockRance.address],
+    { kind: "uups" }
+  );
 
-  // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
-
-  await greeter.deployed();
-
-  console.log("Greeter deployed to:", greeter.address);
+  console.log(`
+    RanceProtocol deployed to: ${protocol.address},);
+    RanceTreasury: ${treasury.address}`);
 }
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

@@ -55,6 +55,7 @@ contract RanceProtocol is
     struct Package { 
         bytes32 packageId;
         uint initialDeposit; 
+        uint insureOutput;
         uint startTimestamp;
         uint endTimestamp;
         bool active;
@@ -210,7 +211,7 @@ contract RanceProtocol is
         uint8 _periodInMonths,
         uint8 _insuranceFee,
         uint _uninsureFee) external{
-
+        require(planExists(_planId), "RanceProtocol: Plan does not exist");
         for (uint i = 0; i < packagePlans.length; i = i + 1 ) {
             if(packagePlans[i].planId == _planId){
                 packagePlans[i] = idToPlan[_planId] = PackagePlan(
@@ -278,19 +279,19 @@ contract RanceProtocol is
      * @param _insureCoin the insureCoin choosen by the user
      * @param _paymentToken the payment token deposited
      */
-    function Insure
+    function insure
     (
         bytes32 _planId,
         uint _amount,
         address _insureCoin,
         address _paymentToken) external{
 
-        uint insuranceFee = getInsuranceFee(_planId, _amount);
-        uint insureAmount = _amount.sub(insuranceFee);
+        uint insureAmount = getInsureAmount(_planId, _amount);
+        uint insuranceFee = _amount.sub(insureAmount);
 
         IERC20Upgradeable(_paymentToken).safeTransferFrom(msg.sender, address(treasury), insuranceFee);
 
-        _swap(_paymentToken, _insureCoin, msg.sender, insureAmount);
+        uint swapOutput = _swap(_paymentToken, _insureCoin, msg.sender, insureAmount);
 
         totalInsuranceLocked += insureAmount;
 
@@ -300,6 +301,7 @@ contract RanceProtocol is
         package.active = isPackageActive(package);
         package.endTimestamp = retrievePackageEndDate(package);
         package.initialDeposit = insureAmount;
+        package.insureOutput = swapOutput;
         package.isWithdrawn = false;
         package.isCancelled = false;
         package.insureCoin = _insureCoin;
@@ -345,6 +347,13 @@ contract RanceProtocol is
             }
         }
 
+
+        IERC20Upgradeable(package.insureCoin).safeTransferFrom(
+            msg.sender,
+            address(treasury),
+            package.insureOutput
+        );
+
         RANCE.safeTransferFrom(
             msg.sender,
             address(treasury), 
@@ -380,6 +389,12 @@ contract RanceProtocol is
             }
         }
 
+        IERC20Upgradeable(package.insureCoin).safeTransferFrom(
+            msg.sender,
+            address(treasury),
+            package.insureOutput
+        );
+
         treasury.withdrawToken(
             package.paymentToken, 
             msg.sender, 
@@ -390,18 +405,20 @@ contract RanceProtocol is
     } 
 
     /**
-     * @notice get the calculated insurance fee
+     * @notice get the calculated insure Amount
      * @param _planId id of the package plan
      * @param _amount amount to be calculate
-     * @return insuranceFee return the insurance fee for specific period and amount
+     * @return insureAmount return the insure Amount from amount 
      */
-    function getInsuranceFee(
+    function getInsureAmount(
         bytes32 _planId, 
         uint _amount) public view returns(uint){
+        require(planExists(_planId), "RanceProtocol: Plan does not exist");
         PackagePlan memory packagePlan = idToPlan[_planId];
-        uint percentage = uint(packagePlan.insuranceFee).mul(100); 
-        uint insuranceFee = ((percentage.div(2)).mul(_amount)).div(10000);
-        return insuranceFee;
+        uint percentage = packagePlan.insuranceFee; 
+        uint numerator = 10000;
+        uint insureAmount = (numerator.div(percentage.add(100)).mul(_amount)).div(100);
+        return insureAmount;
     }
 
     /**
@@ -412,19 +429,34 @@ contract RanceProtocol is
         return package.startTimestamp + (package.packagePlan.periodInMonths * 30 days);
     }
 
+    /**
+     * @notice Determines whether a package exists with the given id
+     * @param _planId the id of a package plan
+     * @return true if package plan exists and its id is valid
+     */
+    function planExists(bytes32 _planId)
+        public view returns (bool){
+        if (idToPlan[_planId].planId == _planId) {
+            return true;
+        }
+        return false;
+    }
+
 
     function _swap(
         address _tokenA, 
         address _tokenB,
         address _to,
         uint _amount
-    ) private{
+    ) private returns(uint){
         uint deadline = block.timestamp;
         address[] memory path = getTokensPath(_tokenA, _tokenB);
         uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[1];
         IERC20Upgradeable(_tokenA).transferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(_tokenA).approve(address(uniswapRouter), _amount);
-        uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
+        uint[] memory amounts = uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
+
+        return amounts[1];
     }
 
     function getTokensPath(address tokenA, address tokenB) private pure returns (address[] memory) {

@@ -54,6 +54,7 @@ contract RanceProtocol is
      */
     struct Package { 
         address user;
+        bytes32 planId;
         uint initialDeposit; 
         uint insureOutput;
         uint startTimestamp;
@@ -62,7 +63,6 @@ contract RanceProtocol is
         bool isWithdrawn;
         address insureCoin;
         address paymentToken;
-        PackagePlan packagePlan;
     }
 
     /**
@@ -90,10 +90,10 @@ contract RanceProtocol is
      */
     event InsuranceActivated(
         address _user,
+        bytes32 _planId,
         address _insureCoin,
         uint _amount,
-        uint _endTimestamp,
-        PackagePlan _packagePlan
+        uint _endTimestamp
     );
 
 
@@ -285,7 +285,6 @@ contract RanceProtocol is
 
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
-        uint index = _getPlanIndex(_planId);
 
         IERC20Upgradeable(_paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(_paymentToken).approve(address(treasury), insuranceFee);
@@ -296,8 +295,8 @@ contract RanceProtocol is
 
         Package memory package;
         package.user = msg.sender;
+        package.planId = _planId;
         package.startTimestamp = block.timestamp;
-        package.packagePlan = packagePlans[index];
         package.endTimestamp = retrievePackageEndDate(package);
         package.initialDeposit = insureAmount;
         package.insureOutput = swapOutput;
@@ -311,10 +310,10 @@ contract RanceProtocol is
 
         emit InsuranceActivated(
             msg.sender,
+            _planId,
             _insureCoin,
             insureAmount, 
-            retrievePackageEndDate(package),
-            packagePlans[index]
+            retrievePackageEndDate(package)
         );
     }
 
@@ -346,6 +345,9 @@ contract RanceProtocol is
         userPackage.isCancelled = true;
         userPackage.isWithdrawn = true;
 
+        uint index = _getPlanIndex(_planId);
+
+
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(
             msg.sender,
@@ -356,7 +358,7 @@ contract RanceProtocol is
         RANCE.safeTransferFrom(
             msg.sender,
             address(treasury), 
-            userPackage.packagePlan.uninsureFee
+            packagePlans[index].uninsureFee
         );
 
         treasury.withdrawToken(
@@ -368,7 +370,7 @@ contract RanceProtocol is
         emit InsuranceCancelled(
             msg.sender,
             userPackage.initialDeposit, 
-            userPackage.packagePlan.uninsureFee);   
+            packagePlans[index].uninsureFee);   
     }
 
 
@@ -385,7 +387,6 @@ contract RanceProtocol is
          "Rance Protocol: Package Not Withdrawable");
 
         userPackage.isWithdrawn = true;
-
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(
             msg.sender,
@@ -424,8 +425,9 @@ contract RanceProtocol is
      * @notice retrieves the package end date
      * @return endDate return the enddate of package
      */
-    function retrievePackageEndDate(Package memory package) public pure returns(uint) {
-        return package.startTimestamp.add(uint(package.packagePlan.periodInMonths).mul(30 days));
+    function retrievePackageEndDate(Package memory package) public view returns(uint) {
+        uint index = _getPlanIndex(package.planId);
+        return package.startTimestamp.add(uint(packagePlans[index].periodInMonths).mul(30 days));
     }
 
     /**

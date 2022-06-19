@@ -516,7 +516,9 @@ contract RanceProtocol is
         uint _amount
     ) private returns(uint){
         uint deadline = block.timestamp;
-        address[] memory path = getTokensPath(_tokenA, _tokenB);
+        address[] memory path = new address[](2);
+        path[0] = _tokenA;
+        path[1] = tokenB;
         uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[1];
         IERC20Upgradeable(_tokenA).approve(address(uniswapRouter), _amount);
         uint[] memory amounts = uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
@@ -524,12 +526,6 @@ contract RanceProtocol is
         return amounts[1];
     }
 
-    function getTokensPath(address tokenA, address tokenB) private pure returns (address[] memory) {
-        address[] memory path = new address[](2);
-        path[0] = tokenA;
-        path[1] = tokenB;
-        return path;
-    }
 
     function isPackageActive(Package memory package) public view returns(bool){
         return block.timestamp <= retrievePackageEndDate(package);

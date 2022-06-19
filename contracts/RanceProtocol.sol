@@ -106,9 +106,10 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is activated
      */
     event InsuranceActivated(
-        address _user,
         bytes32 _planId,
+        address _user,
         address _insureCoin,
+        address _paymentToken,
         uint _amount,
         uint _endTimestamp
     );
@@ -354,9 +355,10 @@ contract RanceProtocol is
         userToPlans[msg.sender].push(_planId);
 
         emit InsuranceActivated(
-            msg.sender,
             _planId,
+            msg.sender,
             _insureCoin,
+            paymentTokens[payTokenIndex],
             insureAmount, 
             retrievePackageEndDate(package)
         );

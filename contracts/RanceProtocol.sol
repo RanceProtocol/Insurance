@@ -73,7 +73,7 @@ contract RanceProtocol is
     /**
      *  @dev retrieve packagePlan index with packagePlan id
      */
-    mapping (bytes32 => uint) private planIdToIndex;
+    mapping (bytes32 => uint) public planIdToIndex;
 
      /**
      *  @dev retrieve user package with packagePlan id
@@ -83,7 +83,7 @@ contract RanceProtocol is
     /**
      *  @dev list all package plans
      */
-    PackagePlan[] private packagePlans;
+    PackagePlan[] public packagePlans;
 
     /**
      * @dev Emitted when an insurance package is activated

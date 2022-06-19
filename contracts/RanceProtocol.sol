@@ -344,6 +344,7 @@ contract RanceProtocol is
         !userPackage.isCancelled, "Rance Protocol: Package Not Cancellable");
 
         userPackage.isCancelled = true;
+        userPackage.isWithdrawn = true;
 
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(

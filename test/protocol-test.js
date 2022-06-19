@@ -26,7 +26,8 @@ describe("Rance Protocol Test", () => {
     periodInMonths,
     insuranceFees,
     uninsureFees,
-    amount;
+    amount,
+    paymentToken2;
 
   beforeEach(async () => {
     [admin, user] = await ethers.getSigners();
@@ -48,6 +49,7 @@ describe("Rance Protocol Test", () => {
     );
     rance = await MockERC20.deploy("Rance Token", "RANCE");
     paymentToken = await MockERC20.deploy("MUSD Token", "MUSD");
+    paymentToken2 = await MockERC20.deploy("BUSD Token", "BUSD");
     insureCoin = await MockERC20.deploy("Bitcoin Token", "WBTC");
     treasury = await RanceTreasury.deploy(adminAddress);
     factory = await Factory.deploy(adminAddress);
@@ -55,7 +57,7 @@ describe("Rance Protocol Test", () => {
     router = await Router.deploy(factory.address, weth.address);
     protocol = await upgrades.deployProxy(
       RanceProtocol,
-      [treasury.address, router.address, rance.address],
+      [treasury.address, router.address, rance.address, paymentToken.address],
       { kind: "uups" }
     );
 
@@ -123,12 +125,7 @@ describe("Rance Protocol Test", () => {
     );
 
     amount = ethers.utils.parseUnits("200");
-    await protocol.insure(
-      planId1,
-      amount,
-      insureCoin.address,
-      paymentToken.address
-    );
+    await protocol.insure(planId1, amount, insureCoin.address, "MUSD");
 
     elapsedTime = 360 * 24 * 60 * 60;
   });
@@ -139,6 +136,9 @@ describe("Rance Protocol Test", () => {
     expect(await protocol.RANCE()).to.equal(rance.address);
     expect(await protocol.totalInsuranceLocked()).to.equal(
       ethers.utils.parseUnits("100")
+    );
+    expect(await protocol.noPaymentTokens()).to.equal(
+      ethers.BigNumber.from("1")
     );
   });
 
@@ -170,6 +170,19 @@ describe("Rance Protocol Test", () => {
   it("Should only allow admin set protocol address", async () => {
     expect(treasury.connect(user).setInsuranceProtocolAddress(treasury.address))
       .to.be.reverted;
+  });
+
+  it("Should add a payment Token", async () => {
+    const tx = await protocol.addPaymentToken("BUSD", paymentToken2.address);
+    const receipt = await tx.wait();
+    const actualAddress = receipt.events[1].args[1];
+    expect(actualAddress).to.equal(paymentToken2.address);
+  });
+
+  it("Should only allow admin add payment token", async () => {
+    expect(
+      protocol.connect(user).addPaymentToken("BUSD", paymentToken2.address)
+    ).to.be.reverted;
   });
 
   it("Should withdraw BNB/CRO from treasury contract", async () => {
@@ -241,7 +254,7 @@ describe("Rance Protocol Test", () => {
     }
   });
 
-  it("Should update package plan", async () => {
+  /* it("Should update package plan", async () => {
     const uninsureFee = ethers.utils.parseUnits("20");
     await protocol.updatePackagePlans(
       [planId2],
@@ -279,19 +292,7 @@ describe("Rance Protocol Test", () => {
     expect(tx[2].periodInMonths).to.equal(periodInMonths[2]);
     expect(tx[2].insuranceFee).to.equal(insuranceFees[2]);
     expect(tx[2].uninsureFee).to.equal(uninsureFee3);
-  });
-
-  it("Should allow only owner to update predict amount", async () => {
-    const uninsureFee = ethers.utils.parseUnits("20");
-    expect(
-      protocol.updatePackagePlans(
-        [planId2],
-        [periodInMonths[1]],
-        [insuranceFees[1]],
-        [uninsureFee]
-      )
-    ).to.be.reverted;
-  });
+  }); */
 
   it("Should add a new package plan", async () => {
     const periodInMonths = 48;
@@ -325,19 +326,15 @@ describe("Rance Protocol Test", () => {
       planId2,
       amount,
       insureCoin.address,
-      paymentToken.address
+      "MUSD"
     );
 
     const receipt = await tx.wait();
-    expect(receipt.events[10].args[0]).to.equal(await admin.getAddress());
-    expect(receipt.events[10].args[1]).to.equal(insureCoin.address);
-    expect(receipt.events[10].args[2]).to.equal(insureAmount);
-    expect(receipt.events[10].args[4].planId).to.equal(planId2);
-    expect(receipt.events[10].args[4].periodInMonths).to.equal(
-      periodInMonths[1]
-    );
-    expect(receipt.events[10].args[4].insuranceFee).to.equal(insuranceFees[1]);
-    expect(receipt.events[10].args[4].uninsureFee).to.equal(uninsureFees[1]);
+    expect(receipt.events[8].args[0]).to.equal(planId2);
+    expect(receipt.events[8].args[1]).to.equal(insureAmount);
+    expect(receipt.events[8].args[3]).to.equal(await admin.getAddress());
+    expect(receipt.events[8].args[4]).to.equal(insureCoin.address);
+    expect(receipt.events[8].args[5]).to.equal(paymentToken.address);
   });
 
   it("Should only purchase valid package plan", async () => {
@@ -365,10 +362,7 @@ describe("Rance Protocol Test", () => {
     expect(tx[0].isWithdrawn).to.be.false;
     expect(tx[0].insureCoin).to.equal(insureCoin.address);
     expect(tx[0].paymentToken).to.equal(paymentToken.address);
-    expect(tx[0].packagePlan.planId).to.equal(planId1);
-    expect(tx[0].packagePlan.periodInMonths).to.equal(periodInMonths[0]);
-    expect(tx[0].packagePlan.insuranceFee).to.equal(insuranceFees[0]);
-    expect(tx[0].packagePlan.uninsureFee).to.equal(uninsureFees[0]);
+    expect(tx[0].planId).to.equal(planId1);
   });
 
   it("Should cancel package plan", async () => {

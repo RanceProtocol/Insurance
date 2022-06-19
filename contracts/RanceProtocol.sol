@@ -39,10 +39,10 @@ contract RanceProtocol is
     uint public totalInsuranceLocked;
 
     /** 
-    * @dev Total number of package plan
+    * @dev list of package plan
     */
 
-    uint public noPackagePlans;
+    PackagePlan[] public packagePlans;
 
     /** 
     * @dev Total number of payment token
@@ -109,11 +109,11 @@ contract RanceProtocol is
      */
     event InsuranceActivated(
         bytes32 _planId,
+        uint _amount,
+        uint _endTimestamp,
         address _user,
         address _insureCoin,
-        address _paymentToken,
-        uint _amount,
-        uint _endTimestamp
+        address _paymentToken
     );
 
 
@@ -132,7 +132,7 @@ contract RanceProtocol is
     /**
      * @dev Emitted when a payment token is added
      */
-    event PaymentTokenAdded(uint index, address indexed paymentToken);
+    event PaymentTokenAdded(string paymentTokenName, address indexed paymentToken);
 
 
     /**
@@ -209,7 +209,7 @@ contract RanceProtocol is
                 periodInMonths[i],
                 insuranceFees[i],
                 uninsureFees[i]);
-            noPackagePlans += 1;     
+            packagePlans.push(planIdToPackagePlan[ids[i]]);   
         }
         IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
 
@@ -248,13 +248,12 @@ contract RanceProtocol is
         uint[] memory _uninsureFees) external onlyOwner{
 
         for (uint i = 0; i < _planIds.length; i = i + 1 ) {
-            uint index = _getPlanIndex(_planIds[i]);
-            PackagePlan storage packagePlan = packagePlans[index];
+            PackagePlan storage packagePlan = planIdToPackagePlan[_planIds[i]];
             packagePlan.planId = _planIds[i];
             packagePlan.periodInMonths = _periodInMonths[i];
             packagePlan.insuranceFee = _insuranceFees[i];
             packagePlan.uninsureFee = _uninsureFees[i];
-
+            
             emit PackagePlanUpdated(_planIds[i]);
         }
     }
@@ -285,6 +284,8 @@ contract RanceProtocol is
             _uninsureFee
         );
 
+        packagePlans.push(planIdToPackagePlan[_planId]); 
+
 
         emit PackagePlanAdded(
             _planId,
@@ -309,7 +310,7 @@ contract RanceProtocol is
         noPaymentTokens += 1;
         IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
-        emit PaymentTokenAdded(index, _token);
+        emit PaymentTokenAdded(_tokenName, _token);
     }
 
 
@@ -338,7 +339,7 @@ contract RanceProtocol is
 
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
-        uint paymentToken = paymentTokenNameToAddress[_paymentTokenName];
+        address paymentToken = paymentTokenNameToAddress[_paymentTokenName];
 
         IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
@@ -350,10 +351,10 @@ contract RanceProtocol is
         planToUserPackage[_planId][msg.sender] = Package(
             msg.sender,
             _planId,
-            block.timestamp,
-            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
             insureAmount,
             swapOutput,
+            block.timestamp,
+            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
             false,
             false,
             _insureCoin,
@@ -363,11 +364,11 @@ contract RanceProtocol is
 
         emit InsuranceActivated(
             _planId,
+            insureAmount, 
+            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
             msg.sender,
             _insureCoin,
-            paymentToken,
-            insureAmount, 
-            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days))
+            paymentToken
         );
     }
 
@@ -399,9 +400,6 @@ contract RanceProtocol is
         userPackage.isCancelled = true;
         userPackage.isWithdrawn = true;
 
-        uint index = _getPlanIndex(_planId);
-
-
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(
             msg.sender,
@@ -412,7 +410,7 @@ contract RanceProtocol is
         RANCE.safeTransferFrom(
             msg.sender,
             address(treasury), 
-            packagePlans[index].uninsureFee
+            planIdToPackagePlan[_planId].uninsureFee
         );
 
         treasury.withdrawToken(
@@ -428,7 +426,7 @@ contract RanceProtocol is
             userPackage.insureCoin, 
             userPackage.paymentToken, 
             userPackage.initialDeposit, 
-            packagePlans[index].uninsureFee
+            planIdToPackagePlan[_planId].uninsureFee
         );
     }
 
@@ -501,12 +499,12 @@ contract RanceProtocol is
      */
     function planExists(bytes32 _planId)
         private view returns (bool){
-        if (packagePlans == 0) {
+        if (packagePlans.length == 0) {
             return false;
         }
 
-        uint packagePlan = planIdToPackagePlan[_planId];
-        return (packagePla.planId == _planId );
+        PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
+        return (keccak256(abi.encodePacked(packagePlan.planId)) == keccak256(abi.encodePacked(_planId)));
     }
 
 

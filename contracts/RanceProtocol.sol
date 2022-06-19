@@ -339,19 +339,18 @@ contract RanceProtocol is
 
         totalInsuranceLocked += insureAmount;
 
-        Package memory package;
-        package.user = msg.sender;
-        package.planId = _planId;
-        package.startTimestamp = block.timestamp;
-        package.endTimestamp = (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days));
-        package.initialDeposit = insureAmount;
-        package.insureOutput = swapOutput;
-        package.isWithdrawn = false;
-        package.isCancelled = false;
-        package.insureCoin = _insureCoin;
-        package.paymentToken = paymentTokens[payTokenIndex];
-
-        planToUserPackage[_planId][msg.sender] = package;
+        planToUserPackage[_planId][msg.sender] = Package(
+            msg.sender,
+            _planId,
+            block.timestamp,
+            (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days)),
+            insureAmount,
+            swapOutput,
+            false,
+            false,
+            _insureCoin,
+            paymentTokens[payTokenIndex]
+        );
         userToPlans[msg.sender].push(_planId);
 
         emit InsuranceActivated(
@@ -360,7 +359,7 @@ contract RanceProtocol is
             _insureCoin,
             paymentTokens[payTokenIndex],
             insureAmount, 
-            retrievePackageEndDate(package)
+            (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days))
         );
     }
 

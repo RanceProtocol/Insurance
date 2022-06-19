@@ -202,6 +202,7 @@ contract RanceProtocol is
             uint newIndex = packagePlans.length - 1;
             planIdToIndex[ids[i]] = newIndex + 1;
         }
+        IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
 
     }
 
@@ -300,6 +301,8 @@ contract RanceProtocol is
         paymentTokens.push(_token);
         uint index = paymentTokens.length - 1;
         paymentTokenNameToIndex[_tokenName] = index + 1;
+        IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
+
         emit PaymentTokenAdded(index, _token);
     }
 
@@ -518,9 +521,8 @@ contract RanceProtocol is
         uint deadline = block.timestamp;
         address[] memory path = new address[](2);
         path[0] = _tokenA;
-        path[1] = tokenB;
+        path[1] = _tokenB;
         uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[1];
-        IERC20Upgradeable(_tokenA).approve(address(uniswapRouter), _amount);
         uint[] memory amounts = uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
 
         return amounts[1];

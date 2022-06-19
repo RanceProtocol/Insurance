@@ -38,6 +38,18 @@ contract RanceProtocol is
     */
     uint public totalInsuranceLocked;
 
+    /** 
+    * @dev Total number of package plan
+    */
+
+    uint public noPackagePlans;
+
+    /** 
+    * @dev Total number of payment token
+    */
+
+    uint public noPaymentTokens;
+
     /**
      * @dev data of Package Plan on the Insurance Protocol
      */
@@ -71,9 +83,9 @@ contract RanceProtocol is
     mapping(address => bytes32[]) public userToPlans; 
 
     /**
-     *  @dev retrieve packagePlan index with packagePlan id
+     *  @dev retrieve packagePlan with packagePlan id
      */
-    mapping (bytes32 => uint) public planIdToIndex;
+    mapping (bytes32 => PackagePlan) public planIdToPackagePlan;
 
      /**
      *  @dev retrieve user package with packagePlan id
@@ -83,23 +95,13 @@ contract RanceProtocol is
     /**
      * @dev retrieve payment token index  with name
      */
-    mapping(string => uint) public paymentTokenNameToIndex;
+    mapping(string => address) public paymentTokenNameToAddress;
 
 
     /**
      * @dev check if payment token is added
      */
     mapping(address => bool) public added;
-
-    /**
-     *  @dev list all package plans
-     */
-    PackagePlan[] public packagePlans;
-
-    /**
-     *  @dev list all payment tokens
-     */
-    address[] public paymentTokens;
 
 
     /**
@@ -119,7 +121,10 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is cancelled
      */
     event InsuranceCancelled(
-        address indexed _user,
+        bytes32 _planId,
+        address indexed _user,   
+        address indexed _insureCoin, 
+        address indexed _paymentToken,
         uint _amount,
         uint _penalty
     );
@@ -133,7 +138,13 @@ contract RanceProtocol is
     /**
      * @dev Emitted when an insurance package is withdrawn
      */
-    event InsuranceWithdrawn(address indexed _user,uint _amount);
+    event InsuranceWithdrawn(
+        bytes32 planId, 
+        uint _amount,
+        address indexed _user,   
+        address indexed _insureCoin, 
+        address indexed _paymentToken
+    );
 
     /**
      * @dev Emitted when a package plan is updated
@@ -182,9 +193,8 @@ contract RanceProtocol is
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
         RANCE = IERC20Upgradeable(_rance);
         totalInsuranceLocked = 0;
-        paymentTokens.push(_paymentToken);
-        uint index = paymentTokens.length - 1;
-        paymentTokenNameToIndex["MUSD"] = index + 1;
+        paymentTokenNameToAddress["MUSD"] = _paymentToken;
+        noPaymentTokens = 1;
         uint8[3] memory periodInMonths = [6,12,24];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint72[3] memory uninsureFees = [1 ether, 10 ether, 100 ether];
@@ -194,13 +204,12 @@ contract RanceProtocol is
             keccak256(abi.encodePacked(periodInMonths[2],insuranceFees[2],uninsureFees[2]))
         ];
         for (uint i = 0; i < 3; i = i + 1 ) {
-            packagePlans.push(PackagePlan(
+            planIdToPackagePlan[ids[i]] = PackagePlan(
                 ids[i],
                 periodInMonths[i],
                 insuranceFees[i],
-                uninsureFees[i]));
-            uint newIndex = packagePlans.length - 1;
-            planIdToIndex[ids[i]] = newIndex + 1;
+                uninsureFees[i]);
+            noPackagePlans += 1;     
         }
         IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
 
@@ -269,15 +278,13 @@ contract RanceProtocol is
         
         require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
 
-        packagePlans.push(PackagePlan(
+        planIdToPackagePlan[_planId] = PackagePlan(
             _planId,
             _periodInMonths, 
             _insuranceFee, 
             _uninsureFee
-            ));
+        );
 
-        uint newIndex = packagePlans.length - 1;
-        planIdToIndex[_planId] = newIndex + 1;
 
         emit PackagePlanAdded(
             _planId,
@@ -298,9 +305,8 @@ contract RanceProtocol is
     function addPaymentToken(string memory _tokenName,address _token) external onlyOwner {
         require(!added[_token], "Rance Protocol:paymentToken already added");
         added[_token] = true;
-        paymentTokens.push(_token);
-        uint index = paymentTokens.length - 1;
-        paymentTokenNameToIndex[_tokenName] = index + 1;
+        paymentTokenNameToAddress[_tokenName] = _token;
+        noPaymentTokens += 1;
         IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
         emit PaymentTokenAdded(index, _token);
@@ -332,13 +338,12 @@ contract RanceProtocol is
 
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
-        uint index = _getPlanIndex(_planId);
-        uint payTokenIndex = paymentTokenNameToIndex[_paymentTokenName];
+        uint paymentToken = paymentTokenNameToAddress[_paymentTokenName];
 
-        IERC20Upgradeable(paymentTokens[payTokenIndex]).safeTransferFrom(msg.sender, address(this), _amount);
-        IERC20Upgradeable(paymentTokens[payTokenIndex]).approve(address(treasury), insuranceFee);
-        IERC20Upgradeable(paymentTokens[payTokenIndex]).safeTransfer(address(treasury), insuranceFee);
-        uint swapOutput = _swap(paymentTokens[payTokenIndex], _insureCoin, msg.sender, insureAmount);
+        IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
+        IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
+        uint swapOutput = _swap(paymentToken, _insureCoin, msg.sender, insureAmount);
 
         totalInsuranceLocked += insureAmount;
 
@@ -346,13 +351,13 @@ contract RanceProtocol is
             msg.sender,
             _planId,
             block.timestamp,
-            (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days)),
+            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
             insureAmount,
             swapOutput,
             false,
             false,
             _insureCoin,
-            paymentTokens[payTokenIndex]
+            paymentToken
         );
         userToPlans[msg.sender].push(_planId);
 
@@ -360,9 +365,9 @@ contract RanceProtocol is
             _planId,
             msg.sender,
             _insureCoin,
-            paymentTokens[payTokenIndex],
+            paymentToken,
             insureAmount, 
-            (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days))
+            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days))
         );
     }
 
@@ -416,10 +421,15 @@ contract RanceProtocol is
             userPackage.initialDeposit
         );     
 
+       
         emit InsuranceCancelled(
-            msg.sender,
+            _planId, 
+            msg.sender, 
+            userPackage.insureCoin, 
+            userPackage.paymentToken, 
             userPackage.initialDeposit, 
-            packagePlans[index].uninsureFee);   
+            packagePlans[index].uninsureFee
+        );
     }
 
 
@@ -449,7 +459,13 @@ contract RanceProtocol is
             userPackage.initialDeposit
         );     
 
-        emit InsuranceWithdrawn(msg.sender, userPackage.initialDeposit);
+        emit InsuranceWithdrawn(
+            _planId, 
+           userPackage.initialDeposit, 
+           msg.sender, 
+           userPackage.insureCoin, 
+           userPackage.paymentToken
+        );
     } 
 
     /**
@@ -462,8 +478,7 @@ contract RanceProtocol is
         bytes32 _planId, 
         uint _amount) public view returns(uint){
         require(planExists(_planId), "RanceProtocol: Plan does not exist");
-        uint index = _getPlanIndex(_planId);
-        PackagePlan memory packagePlan = packagePlans[index];
+        PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
         uint percentage = packagePlan.insuranceFee; 
         uint numerator = 10000;
         uint insureAmount = ((numerator.div(percentage.add(100))).mul(_amount)).div(100);
@@ -475,8 +490,8 @@ contract RanceProtocol is
      * @return endDate return the enddate of package
      */
     function retrievePackageEndDate(Package memory package) public view returns(uint) {
-        uint index = _getPlanIndex(package.planId);
-        return package.startTimestamp.add(uint(packagePlans[index].periodInMonths).mul(30 days));
+
+        return package.startTimestamp.add(uint(planIdToPackagePlan[package.planId].periodInMonths).mul(30 days));
     }
 
     /**
@@ -486,29 +501,12 @@ contract RanceProtocol is
      */
     function planExists(bytes32 _planId)
         private view returns (bool){
-        if (packagePlans.length == 0) {
+        if (packagePlans == 0) {
             return false;
         }
 
-        uint index = planIdToIndex[_planId];
-        return (index > 0);
-    }
-
-    /**
-     * @notice Returns the array index of the package plan with the given id
-     * @dev if the event id is invalid, then the return value will be incorrect 
-     * and may cause error; 
-     * @param _planId the package plan id to get
-     * @return the array index of this event.
-     */
-    function _getPlanIndex(bytes32 _planId)
-        private view
-        returns (uint)
-    {
-        //check if the event exists
-        require(planExists(_planId), "Rance Protocol: PackagePlan does not exist");
-
-        return planIdToIndex[_planId] - 1;
+        uint packagePlan = planIdToPackagePlan[_planId];
+        return (packagePla.planId == _planId );
     }
 
 

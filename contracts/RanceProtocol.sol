@@ -78,12 +78,29 @@ contract RanceProtocol is
      /**
      *  @dev retrieve user package with packagePlan id
      */
-   mapping(bytes32 => mapping(address => Package)) public planToUserPackage;
+    mapping(bytes32 => mapping(address => Package)) public planToUserPackage;
+
+    /**
+     * @dev retrieve payment token index  with name
+     */
+    mapping(string => uint) public paymentTokenNameToIndex;
+
+
+    /**
+     * @dev check if payment token is added
+     */
+    mapping(address => bool) public added;
 
     /**
      *  @dev list all package plans
      */
     PackagePlan[] public packagePlans;
+
+    /**
+     *  @dev list all payment tokens
+     */
+    address[] public paymentTokens;
+
 
     /**
      * @dev Emitted when an insurance package is activated
@@ -105,6 +122,11 @@ contract RanceProtocol is
         uint _amount,
         uint _penalty
     );
+
+    /**
+     * @dev Emitted when a payment token is added
+     */
+    event PaymentTokenAdded(uint index, address indexed paymentToken);
 
 
     /**
@@ -151,13 +173,17 @@ contract RanceProtocol is
     function initialize(
         address _treasuryAddress,
          address _uniswapRouter,
-         address _rance)
+         address _rance,
+         address _paymentToken)
         public initializer { 
         __Ownable_init();
         treasury = IRanceTreasury(_treasuryAddress);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
         RANCE = IERC20Upgradeable(_rance);
         totalInsuranceLocked = 0;
+        paymentTokens.push(_paymentToken);
+        uint index = paymentTokens.length - 1;
+        paymentTokenNameToIndex["MUSD"] = index + 1;
         uint8[3] memory periodInMonths = [6,12,24];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint72[3] memory uninsureFees = [1 ether, 10 ether, 100 ether];
@@ -175,6 +201,7 @@ contract RanceProtocol is
             uint newIndex = packagePlans.length - 1;
             planIdToIndex[ids[i]] = newIndex + 1;
         }
+
     }
 
     /**
@@ -260,6 +287,22 @@ contract RanceProtocol is
         return _planId;
     }
 
+
+    /**
+    @notice Method for adding payment token
+    @dev Only admin
+    @param _token ERC20 token address
+    */
+    function addPaymentToken(string memory _tokenName,address _token) external onlyOwner {
+        require(!added[_token], "Rance Protocol:paymentToken already added");
+        added[_token] = true;
+        paymentTokens.push(_token);
+        uint index = paymentTokens.length - 1;
+        paymentTokenNameToIndex[_tokenName] = index + 1;
+        emit PaymentTokenAdded(index, _token);
+    }
+
+
     /**
      * @notice get all package plans
      * @return packagePlans return array of package plans
@@ -274,23 +317,24 @@ contract RanceProtocol is
      * @param _planId      id of the package plan 
      * @param _amount the amount deposited
      * @param _insureCoin the insureCoin choosen by the user
-     * @param _paymentToken the payment token deposited
+     * @param _paymentTokenName the payment token deposited
      */
     function insure
     (
         bytes32 _planId,
         uint _amount,
         address _insureCoin,
-        address _paymentToken) external{
+        string memory _paymentTokenName) external{
 
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
         uint index = _getPlanIndex(_planId);
+        uint payTokenIndex = paymentTokenNameToIndex[_paymentTokenName];
 
-        IERC20Upgradeable(_paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
-        IERC20Upgradeable(_paymentToken).approve(address(treasury), insuranceFee);
-        IERC20Upgradeable(_paymentToken).safeTransfer(address(treasury), insuranceFee);
-        uint swapOutput = _swap(_paymentToken, _insureCoin, msg.sender, insureAmount);
+        IERC20Upgradeable(paymentTokens[payTokenIndex]).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20Upgradeable(paymentTokens[payTokenIndex]).approve(address(treasury), insuranceFee);
+        IERC20Upgradeable(paymentTokens[payTokenIndex]).safeTransfer(address(treasury), insuranceFee);
+        uint swapOutput = _swap(paymentTokens[payTokenIndex], _insureCoin, msg.sender, insureAmount);
 
         totalInsuranceLocked += insureAmount;
 
@@ -304,7 +348,7 @@ contract RanceProtocol is
         package.isWithdrawn = false;
         package.isCancelled = false;
         package.insureCoin = _insureCoin;
-        package.paymentToken = _paymentToken;
+        package.paymentToken = paymentTokens[payTokenIndex];
 
         planToUserPackage[_planId][msg.sender] = package;
         userToPlans[msg.sender].push(_planId);

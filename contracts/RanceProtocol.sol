@@ -285,6 +285,7 @@ contract RanceProtocol is
 
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
+        uint index = _getPlanIndex(_planId);
 
         IERC20Upgradeable(_paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(_paymentToken).approve(address(treasury), insuranceFee);
@@ -297,7 +298,7 @@ contract RanceProtocol is
         package.user = msg.sender;
         package.planId = _planId;
         package.startTimestamp = block.timestamp;
-        package.endTimestamp = retrievePackageEndDate(package);
+        package.endTimestamp = (block.timestamp).add(uint(packagePlans[index].periodInMonths).mul(30 days));
         package.initialDeposit = insureAmount;
         package.insureOutput = swapOutput;
         package.isWithdrawn = false;

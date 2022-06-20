@@ -57,7 +57,8 @@ contract RanceProtocol is
         bytes32 planId;
         uint8 periodInMonths;
         uint8 insuranceFee;
-        uint uninsureFee; 
+        uint uninsureFee;
+        bool isActivated; 
     }
 
 
@@ -142,9 +143,9 @@ contract RanceProtocol is
     );
 
     /**
-     * @dev Emitted when a package plan is updated
+     * @dev Emitted when a package plan is deactivated
      */
-    event PackagePlanUpdated(bytes32 _id);
+    event PackagePlanDeactivated(bytes32 _id);
 
     /**
      * @dev Emitted when a package plan is added
@@ -203,7 +204,8 @@ contract RanceProtocol is
                 ids[i],
                 periodInMonths[i],
                 insuranceFees[i],
-                uninsureFees[i]);
+                uninsureFees[i],
+                true);
             packagePlans.push(planIdToPackagePlan[ids[i]]);   
         }
         IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
@@ -244,12 +246,33 @@ contract RanceProtocol is
 
         for (uint i = 0; i < _planIds.length; i = i + 1 ) {
             PackagePlan storage packagePlan = planIdToPackagePlan[_planIds[i]];
-            packagePlan.planId = _planIds[i];
-            packagePlan.periodInMonths = _periodInMonths[i];
-            packagePlan.insuranceFee = _insuranceFees[i];
-            packagePlan.uninsureFee = _uninsureFees[i];
+            packagePlan.isActivated = false;
+
+            bytes32 _planId = keccak256(abi.encodePacked(
+            _periodInMonths[i],
+            _insuranceFees[i],
+            _uninsureFees[i]));
+        
+            require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
+
+            planIdToPackagePlan[_planId] = PackagePlan(
+                _planId,
+                _periodInMonths[i], 
+                _insuranceFees[i], 
+                _uninsureFees[i],
+                true
+            );
+
+            packagePlans.push(planIdToPackagePlan[_planId]); 
             
-            emit PackagePlanUpdated(_planIds[i]);
+            emit PackagePlanDeactivated(_planIds[i]);
+
+            emit PackagePlanAdded(
+                _planId,
+                _uninsureFees[i], 
+                _insuranceFees[i], 
+                _periodInMonths[i]
+            );
         }
     }
 
@@ -276,7 +299,8 @@ contract RanceProtocol is
             _planId,
             _periodInMonths, 
             _insuranceFee, 
-            _uninsureFee
+            _uninsureFee,
+            true
         );
 
         packagePlans.push(planIdToPackagePlan[_planId]); 
@@ -329,6 +353,15 @@ contract RanceProtocol is
      * @return packagePlans return array of package plans
      */
     function getAllPackagePlans() external view returns(PackagePlan[] memory){
+        uint length = packagePlans.length;
+        PackagePlan[] memory output = new PackagePlan[](length);
+        uint index = 0;
+        for (uint i = 0; i < length; i = i + 1) {
+            if(packagePlans[i].isActivated == true){
+                output[index] = packagePlans[i];
+                index = index + 1;
+            }
+        }
         return packagePlans;
     }
     
@@ -346,7 +379,7 @@ contract RanceProtocol is
         uint _amount,
         address _insureCoin,
         string memory _paymentTokenName) external{
-
+        require(planIdToPackagePlan[_planId].isActivated, "Rance Protocol: PackagePlan not active");
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
         address paymentToken = paymentTokenNameToAddress[_paymentTokenName];

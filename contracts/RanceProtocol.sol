@@ -324,12 +324,12 @@ contract RanceProtocol is
     @dev Only admin
     @param _token ERC20 token address
     */
-    function remove(string memory _tokenName,address _token) external onlyOwner {
+    function removePaymentToken(string memory _tokenName,address _token) external onlyOwner {
         require(added[_token], "Rance Protocol:paymentToken already added");
         added[_token] = false;
         paymentTokenNameToAddress[_tokenName] = _token;
         noPaymentTokens -= 1;
-        IERC20Upgradeable(_token).decreaseAllowance(address(uniswapRouter), type(uint256).max);
+        IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
 
         emit PaymentTokenRemoved(_tokenName, _token);
     }
@@ -518,13 +518,12 @@ contract RanceProtocol is
      * @param _planId the id of a package plan
      * @return true if package plan exists and its id is valid
      */
-    function planExists(bytes32 _planId)
-        private view returns (bool){
-        if (planIdToPackagePlan[_planId] == "") {
+    function planExists(bytes32 _planId)private view returns (bool){
+        PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
+        if (keccak256(abi.encodePacked(packagePlan.planId)) == "") {
             return false;
         }
 
-        PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
         return (keccak256(abi.encodePacked(packagePlan.planId)) == keccak256(abi.encodePacked(_planId)));
     }
 

@@ -136,6 +136,12 @@ contract RanceProtocol is
 
 
     /**
+     * @dev Emitted when a payment token is removed
+     */
+    event PaymentTokenRemoved(string paymentTokenName, address indexed paymentToken);
+
+
+    /**
      * @dev Emitted when an insurance package is withdrawn
      */
     event InsuranceWithdrawn(
@@ -311,6 +317,21 @@ contract RanceProtocol is
         IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
         emit PaymentTokenAdded(_tokenName, _token);
+    }
+
+    /**
+    @notice Method for removing payment token
+    @dev Only admin
+    @param _token ERC20 token address
+    */
+    function remove(string memory _tokenName,address _token) external onlyOwner {
+        require(added[_token], "Rance Protocol:paymentToken already added");
+        added[_token] = false;
+        paymentTokenNameToAddress[_tokenName] = _token;
+        noPaymentTokens -= 1;
+        IERC20Upgradeable(_token).decreaseAllowance(address(uniswapRouter), type(uint256).max);
+
+        emit PaymentTokenRemoved(_tokenName, _token);
     }
 
 

@@ -368,6 +368,7 @@ contract RanceProtocol is
         uint swapOutput = _swap(paymentToken, _insureCoin, msg.sender, insureAmount);
 
         totalInsuranceLocked += insureAmount;
+        uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days));
 
         planToUserPackage[_planId][msg.sender] = Package(
             msg.sender,
@@ -375,7 +376,7 @@ contract RanceProtocol is
             insureAmount,
             swapOutput,
             block.timestamp,
-            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
+            endTimestamp,
             false,
             false,
             _insureCoin,
@@ -386,7 +387,7 @@ contract RanceProtocol is
         emit InsuranceActivated(
             _planId,
             insureAmount, 
-            (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days)),
+            endTimestamp,
             msg.sender,
             _insureCoin,
             paymentToken

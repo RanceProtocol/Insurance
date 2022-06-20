@@ -520,7 +520,7 @@ contract RanceProtocol is
      */
     function planExists(bytes32 _planId)
         private view returns (bool){
-        if (packagePlans.length == 0) {
+        if (planIdToPackagePlan[_planId] == "") {
             return false;
         }
 

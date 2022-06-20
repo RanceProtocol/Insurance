@@ -108,12 +108,8 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is activated
      */
     event InsuranceActivated(
-        bytes32 _planId,
-        uint _amount,
-        uint _endTimestamp,
-        address _user,
-        address _insureCoin,
-        address _paymentToken
+        bytes32 indexed _planId,
+        address indexed _user
     );
 
 
@@ -121,12 +117,8 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is cancelled
      */
     event InsuranceCancelled(
-        bytes32 _planId,
-        address indexed _user,   
-        address indexed _insureCoin, 
-        address indexed _paymentToken,
-        uint _amount,
-        uint _penalty
+        bytes32 indexed _planId,
+        address indexed _user
     );
 
     /**
@@ -145,11 +137,8 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is withdrawn
      */
     event InsuranceWithdrawn(
-        bytes32 planId, 
-        uint _amount,
-        address indexed _user,   
-        address indexed _insureCoin, 
-        address indexed _paymentToken
+        bytes32 indexed planId, 
+        address indexed _user
     );
 
     /**
@@ -386,11 +375,7 @@ contract RanceProtocol is
 
         emit InsuranceActivated(
             _planId,
-            insureAmount, 
-            endTimestamp,
-            msg.sender,
-            _insureCoin,
-            paymentToken
+            msg.sender
         );
     }
 
@@ -444,11 +429,7 @@ contract RanceProtocol is
        
         emit InsuranceCancelled(
             _planId, 
-            msg.sender, 
-            userPackage.insureCoin, 
-            userPackage.paymentToken, 
-            userPackage.initialDeposit, 
-            planIdToPackagePlan[_planId].uninsureFee
+            msg.sender
         );
     }
 
@@ -481,10 +462,7 @@ contract RanceProtocol is
 
         emit InsuranceWithdrawn(
             _planId, 
-           userPackage.initialDeposit, 
-           msg.sender, 
-           userPackage.insureCoin, 
-           userPackage.paymentToken
+           msg.sender
         );
     } 
 

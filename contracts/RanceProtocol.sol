@@ -33,10 +33,6 @@ contract RanceProtocol is
     */
     IERC20Upgradeable public RANCE;
 
-    /** 
-    * @dev Total Insurance Locked amount
-    */
-    uint public totalInsuranceLocked;
 
     /** 
     * @dev list of package plan
@@ -97,6 +93,11 @@ contract RanceProtocol is
      * @dev retrieve payment token index  with name
      */
     mapping(string => address) public paymentTokenNameToAddress;
+
+    /**
+     * @dev retrieve payment token total insurance locked  with address
+     */
+    mapping(address => uint) public totalInsuranceLocked;
 
 
     /**
@@ -188,8 +189,8 @@ contract RanceProtocol is
         treasury = IRanceTreasury(_treasuryAddress);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
         RANCE = IERC20Upgradeable(_rance);
-        totalInsuranceLocked = 0;
         paymentTokenNameToAddress["MUSD"] = _paymentToken;
+        totalInsuranceLocked[_paymentToken] = 0;
         noPaymentTokens = 1;
         uint8[3] memory periodInMonths = [6,12,24];
         uint8[3] memory insuranceFees = [100, 50, 25];
@@ -228,6 +229,17 @@ contract RanceProtocol is
     {
         treasury = IRanceTreasury(_treasuryAddress);
         emit TreasuryAddressSet(_treasuryAddress);
+    }
+
+    /**
+     * @notice get the totalinsurancelocked of a payment token
+     * @param _token the address of treasury
+     * @return totalInsuranceLocked the total insurance locked of a token
+     */
+    function getTotalInsuranceLocked(address _token)
+        external view returns(uint)
+    {
+        return totalInsuranceLocked[_token];
     }
 
 
@@ -326,6 +338,7 @@ contract RanceProtocol is
         require(!added[_token], "Rance Protocol:paymentToken already added");
         added[_token] = true;
         paymentTokenNameToAddress[_tokenName] = _token;
+        totalInsuranceLocked[_token] = 0;
         noPaymentTokens += 1;
         IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
@@ -389,7 +402,7 @@ contract RanceProtocol is
         IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
         uint swapOutput = _swap(paymentToken, _insureCoin, msg.sender, insureAmount);
 
-        totalInsuranceLocked += insureAmount;
+        totalInsuranceLocked[paymentToken] += insureAmount;
         uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days));
 
         planToUserPackage[_planId][msg.sender] = Package({
@@ -439,7 +452,7 @@ contract RanceProtocol is
 
         userPackage.isCancelled = true;
         userPackage.isWithdrawn = true;
-
+        totalInsuranceLocked[userPackage.paymentToken] -= userPackage.initialDeposit;
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(
             msg.sender,
@@ -480,6 +493,7 @@ contract RanceProtocol is
          "Rance Protocol: Package Not Withdrawable");
 
         userPackage.isWithdrawn = true;
+        totalInsuranceLocked[userPackage.paymentToken] -= userPackage.initialDeposit;
 
         IERC20Upgradeable(userPackage.insureCoin).safeTransferFrom(
             msg.sender,

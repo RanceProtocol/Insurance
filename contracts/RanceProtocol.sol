@@ -226,7 +226,7 @@ contract RanceProtocol is
         noPaymentTokens = 1;
         uint8[3] memory periodInMonths = [6,12,24];
         uint8[3] memory insuranceFees = [100, 50, 25];
-        uint72[3] memory uninsureFees = [1 ether, 10 ether, 100 ether];
+        uint72[3] memory uninsureFees = [10 ether, 100 ether, 1000 ether];
         bytes32[3] memory ids = [
             keccak256(abi.encodePacked(periodInMonths[0],insuranceFees[0],uninsureFees[0])),
             keccak256(abi.encodePacked(periodInMonths[1],insuranceFees[1],uninsureFees[1])),

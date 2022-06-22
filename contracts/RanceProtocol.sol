@@ -46,6 +46,14 @@ contract RanceProtocol is
 
     uint public noPaymentTokens;
 
+
+    /** 
+    * @dev Total number of insure coins
+    */
+
+    uint public noInsureCoins;
+
+
     /**
      * @dev data of Package Plan on the Insurance Protocol
      */
@@ -90,9 +98,16 @@ contract RanceProtocol is
     mapping(bytes32 => mapping(address => Package)) public planToUserPackage;
 
     /**
-     * @dev retrieve payment token index  with name
+     * @dev retrieve payment token  with name
      */
     mapping(string => address) public paymentTokenNameToAddress;
+
+
+    /**
+     * @dev retrieve insure coin with name
+     */
+    mapping(string => address) public insureCoinNameToAddress;
+
 
     /**
      * @dev retrieve payment token total insurance locked  with address
@@ -103,7 +118,12 @@ contract RanceProtocol is
     /**
      * @dev check if payment token is added
      */
-    mapping(address => bool) public added;
+    mapping(address => bool) public paymentTokenAdded;
+
+    /**
+     * @dev check if insure Coin is added
+     */
+    mapping(address => bool) public insureCoinAdded;
 
 
     /**
@@ -132,7 +152,19 @@ contract RanceProtocol is
     /**
      * @dev Emitted when a payment token is removed
      */
-    event PaymentTokenRemoved(string paymentTokenName, address indexed paymentToken);
+    event PaymentTokenRemoved(address indexed paymentToken);
+
+
+     /**
+     * @dev Emitted when a insure coin is added
+     */
+    event InsureCoinAdded(string insureCoinName, address indexed insureCoin);
+
+
+    /**
+     * @dev Emitted when a insure coin is removed
+     */
+    event InsureCoinRemoved(address indexed insureCoin);
 
 
     /**
@@ -332,11 +364,12 @@ contract RanceProtocol is
     /**
     @notice Method for adding payment token
     @dev Only admin
+    @param _tokenName ERC20 token name
     @param _token ERC20 token address
     */
     function addPaymentToken(string memory _tokenName,address _token) external onlyOwner {
-        require(!added[_token], "Rance Protocol:paymentToken already added");
-        added[_token] = true;
+        require(!paymentTokenAdded[_token], "Rance Protocol:paymentToken already added");
+        paymentTokenAdded[_token] = true;
         paymentTokenNameToAddress[_tokenName] = _token;
         totalInsuranceLocked[_token] = 0;
         noPaymentTokens += 1;
@@ -350,14 +383,46 @@ contract RanceProtocol is
     @dev Only admin
     @param _token ERC20 token address
     */
-    function removePaymentToken(string memory _tokenName,address _token) external onlyOwner {
-        require(added[_token], "Rance Protocol:paymentToken already added");
-        added[_token] = false;
-        paymentTokenNameToAddress[_tokenName] = _token;
+    function removePaymentToken(address _token) external onlyOwner {
+        require(paymentTokenAdded[_token], "Rance Protocol:paymentToken already added");
+        paymentTokenAdded[_token] = false;
         noPaymentTokens -= 1;
         IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
 
-        emit PaymentTokenRemoved(_tokenName, _token);
+        emit PaymentTokenRemoved(_token);
+    }
+
+
+    /**
+    @notice Method for adding insure coins
+    @dev Only admin
+    @param _tokenNames array of ERC20 token name
+    @param _tokens array of  ERC20 token address
+    */
+    function addInsureCoins(string[] memory _tokenNames, address[] memory _tokens) external onlyOwner {
+        for (uint i = 0; i < _tokenNames.length; i = i + 1) {
+            require(!insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin already added");
+            insureCoinAdded[_tokens[i]] = true;
+            insureCoinNameToAddress[_tokenNames[i]] = _tokens[i];
+            noInsureCoins += 1;
+
+            emit InsureCoinAdded(_tokenNames[i], _tokens[i]);
+        }
+    }
+
+    /**
+    @notice Method for removing insure coins
+    @dev Only admin
+    @param _tokens array of ERC20 token address
+    */
+    function removeInsureCoins(address[] memory _tokens) external onlyOwner {
+        for (uint i = 0; i < _tokens.length; i = i + 1) {
+            require(!insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin already added");
+            insureCoinAdded[_tokens[i]] = false;
+            noInsureCoins -= 1;
+
+            emit InsureCoinRemoved(_tokens[i]);
+        }
     }
 
 

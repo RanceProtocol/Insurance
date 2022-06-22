@@ -72,6 +72,7 @@ contract RanceProtocol is
     struct Package { 
         address user;
         bytes32 planId;
+        bytes32 packageId;
         uint initialDeposit; 
         uint insureOutput;
         uint startTimestamp;
@@ -92,7 +93,13 @@ contract RanceProtocol is
      */
     mapping (bytes32 => PackagePlan) public planIdToPackagePlan;
 
-     /**
+
+    /**
+     *  @dev retrieve package with package id
+     */
+    mapping (bytes32 => Package) public packageIdToPackage;
+
+    /**
      *  @dev retrieve user package with packagePlan id
      */
     mapping(bytes32 => mapping(address => Package)) public planToUserPackage;
@@ -130,7 +137,7 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is activated
      */
     event InsuranceActivated(
-        bytes32 indexed _planId,
+        bytes32 indexed _packageId,
         address indexed _user
     );
 
@@ -139,7 +146,7 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is cancelled
      */
     event InsuranceCancelled(
-        bytes32 indexed _planId,
+        bytes32 indexed _packageId,
         address indexed _user
     );
 
@@ -171,7 +178,7 @@ contract RanceProtocol is
      * @dev Emitted when an insurance package is withdrawn
      */
     event InsuranceWithdrawn(
-        bytes32 indexed planId, 
+        bytes32 indexed _packageId, 
         address indexed _user
     );
 
@@ -449,43 +456,56 @@ contract RanceProtocol is
      * @param _planId      id of the package plan 
      * @param _amount the amount deposited
      * @param _insureCoin the insureCoin choosen by the user
-     * @param _paymentTokenName the payment token deposited
+     * @param _paymentToken the payment token deposited
      */
     function insure
     (
         bytes32 _planId,
         uint _amount,
-        address _insureCoin,
-        string memory _paymentTokenName) external{
+        string memory _insureCoin,
+        string memory _paymentToken) external{
         require(planIdToPackagePlan[_planId].isActivated, "Rance Protocol: PackagePlan not active");
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
-        address paymentToken = paymentTokenNameToAddress[_paymentTokenName];
+        address paymentToken = paymentTokenNameToAddress[_paymentToken];
+        address insureCoin = insureCoinNameToAddress[_insureCoin];
 
         IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
         IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
-        uint swapOutput = _swap(paymentToken, _insureCoin, msg.sender, insureAmount);
+        uint swapOutput = _swap(paymentToken, insureCoin, msg.sender, insureAmount);
 
         totalInsuranceLocked[paymentToken] += insureAmount;
+        uint startTimestamp = block.timestamp;
         uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days));
+        bytes32 _packageId = keccak256(abi.encodePacked(
+            insureAmount,
+            startTimestamp,
+            endTimestamp,
+            paymentToken,
+            insureCoin));
 
-        planToUserPackage[_planId][msg.sender] = Package({
+        Package memory package = Package({
             user: msg.sender,
             planId: _planId,
+            packageId: _packageId,
             initialDeposit: insureAmount,
             insureOutput: swapOutput,
-            startTimestamp: block.timestamp,
+            startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
             isCancelled: false,
             isWithdrawn: false,
-            insureCoin: _insureCoin,
+            insureCoin: insureCoin,
             paymentToken: paymentToken
         });
+
+        planToUserPackage[_planId][msg.sender] = package;
+        packageIdToPackage[_packageId] = package;
         userToPlans[msg.sender].push(_planId);
+        
 
         emit InsuranceActivated(
-            _planId,
+            _packageId,
             msg.sender
         );
     }
@@ -506,12 +526,12 @@ contract RanceProtocol is
 
     /**
      * @notice cancel insurance package
-     * @param _planId id of package plan to cancel
+     * @param _packageId id of package to cancel
      */
-    function cancel(bytes32 _planId) external nonReentrant{
-        require(planExists(_planId), "Rance Protocol: PackagePlan does not exist");
+    function cancel(bytes32 _packageId) external nonReentrant{
+        require(packageExists(_packageId), "Rance Protocol: Package does not exist");
 
-        Package storage userPackage = planToUserPackage[_planId][msg.sender];
+        Package storage userPackage = planToUserPackage[packageIdToPackage[_packageId].planId][msg.sender];
         require(isPackageActive(userPackage) && 
         !userPackage.isCancelled, "Rance Protocol: Package Not Cancellable");
 
@@ -528,7 +548,7 @@ contract RanceProtocol is
         RANCE.safeTransferFrom(
             msg.sender,
             address(treasury), 
-            planIdToPackagePlan[_planId].uninsureFee
+            planIdToPackagePlan[packageIdToPackage[_packageId].planId].uninsureFee
         );
 
         treasury.withdrawToken(
@@ -539,7 +559,7 @@ contract RanceProtocol is
 
        
         emit InsuranceCancelled(
-            _planId, 
+            _packageId, 
             msg.sender
         );
     }
@@ -547,12 +567,12 @@ contract RanceProtocol is
 
     /**
      * @notice withdraw insurance package
-     * @param _planId id of packagePlan to withdraw
+     * @param _packageId id of package to withdraw
      */
-    function withdraw(bytes32 _planId) external nonReentrant{
-        require(planExists(_planId), "Rance Protocol: PackagePlan does not exist");
+    function withdraw(bytes32 _packageId) external nonReentrant{
+        require(packageExists(_packageId), "Rance Protocol: Package does not exist");
 
-        Package storage userPackage = planToUserPackage[_planId][msg.sender];
+        Package storage userPackage = planToUserPackage[packageIdToPackage[_packageId].planId][msg.sender];
         require(!isPackageActive(userPackage) && 
         !userPackage.isWithdrawn && !userPackage.isCancelled,
          "Rance Protocol: Package Not Withdrawable");
@@ -573,7 +593,7 @@ contract RanceProtocol is
         );     
 
         emit InsuranceWithdrawn(
-            _planId, 
+            _packageId, 
            msg.sender
         );
     } 
@@ -602,6 +622,20 @@ contract RanceProtocol is
     function retrievePackageEndDate(Package memory package) public view returns(uint) {
 
         return package.startTimestamp.add(uint(planIdToPackagePlan[package.planId].periodInMonths).mul(30 days));
+    }
+
+    /**
+     * @notice Determines whether a package exists with the given id
+     * @param _packageId the id of a package
+     * @return true if package exists and its id is valid
+     */
+    function packageExists(bytes32 _packageId)private view returns (bool){
+        Package memory package = packageIdToPackage[_packageId];
+        if (keccak256(abi.encodePacked(package.packageId)) == "") {
+            return false;
+        }
+
+        return (keccak256(abi.encodePacked(package.packageId)) == keccak256(abi.encodePacked(_packageId)));
     }
 
     /**

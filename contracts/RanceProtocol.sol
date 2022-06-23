@@ -426,10 +426,12 @@ contract RanceProtocol is
      */
     function insure
     (
+        address[] memory path,
         bytes32 _planId,
         uint _amount,
         string memory _insureCoin,
-        string memory _paymentToken) external{
+        string memory _paymentToken
+        ) external{
         require(planIdToPackagePlan[_planId].isActivated, "Rance Protocol: PackagePlan not active");
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
@@ -439,7 +441,7 @@ contract RanceProtocol is
         IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
         IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
         IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
-        uint swapOutput = _swap(paymentToken, insureCoin, msg.sender, insureAmount);
+        uint swapOutput = _swap(msg.sender, path, insureAmount);
 
         totalInsuranceLocked[paymentToken] += insureAmount;
         uint startTimestamp = block.timestamp;
@@ -614,16 +616,12 @@ contract RanceProtocol is
 
 
     function _swap(
-        address _tokenA, 
-        address _tokenB,
         address _to,
+        address[] memory path,
         uint _amount
     ) private returns(uint){
         uint deadline = block.timestamp;
-        address[] memory path = new address[](2);
-        path[0] = _tokenA;
-        path[1] = _tokenB;
-        uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[1];
+        uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[path.length - 1];
         uint[] memory amounts = uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
 
         return amounts[1];

@@ -283,48 +283,16 @@ contract RanceProtocol is
 
 
     /**
-     * @notice updates package plan
+     * @notice deactivate package plan
      * @param _planIds the array of package plan id
-     * @param _periodInMonths the array of periods of the package in Months
-     * @param _insuranceFees the array of insurance fee for the package in percentage
-     * @param _uninsureFees the array of penalty amount for insurance cancellation
      */
-    function updatePackagePlans(
-        bytes32[] memory _planIds,
-        uint8[] memory  _periodInMonths,
-        uint8[] memory _insuranceFees,
-        uint[] memory _uninsureFees) external onlyOwner{
+    function deactivatePackagePlan(bytes32 memory _planId) external onlyOwner{
+        require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
 
-        for (uint i = 0; i < _planIds.length; i = i + 1 ) {
-            PackagePlan storage packagePlan = planIdToPackagePlan[_planIds[i]];
-            packagePlan.isActivated = false;
-
-            bytes32 _planId = keccak256(abi.encodePacked(
-            _periodInMonths[i],
-            _insuranceFees[i],
-            _uninsureFees[i]));
+        PackagePlan storage packagePlan = planIdToPackagePlan[_planId];
+        packagePlan.isActivated = false;
         
-            require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
-
-            planIdToPackagePlan[_planId] = PackagePlan(
-                _planId,
-                _periodInMonths[i], 
-                _insuranceFees[i], 
-                _uninsureFees[i],
-                true
-            );
-
-            packagePlans.push(planIdToPackagePlan[_planId]); 
-            
-            emit PackagePlanDeactivated(_planIds[i]);
-
-            emit PackagePlanAdded(
-                _planId,
-                _uninsureFees[i], 
-                _insuranceFees[i], 
-                _periodInMonths[i]
-            );
-        }
+        emit PackagePlanDeactivated(_planId);
     }
 
 

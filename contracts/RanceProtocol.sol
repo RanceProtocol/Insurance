@@ -35,10 +35,9 @@ contract RanceProtocol is
 
 
     /** 
-    * @dev list of package plan
+    * @dev list of package plan ids
     */
-
-    PackagePlan[] public packagePlans;
+    bytes32[] public packagePlanIds;
 
     /** 
     * @dev Total number of payment token
@@ -246,7 +245,7 @@ contract RanceProtocol is
                 insuranceFees[i],
                 uninsureFees[i],
                 true);
-            packagePlans.push(planIdToPackagePlan[ids[i]]);   
+            packagePlanIds.push(ids[i]);   
         }
         IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
 
@@ -322,7 +321,7 @@ contract RanceProtocol is
             true
         );
 
-        packagePlans.push(planIdToPackagePlan[_planId]); 
+        packagePlanIds.push(_planId); 
 
 
         emit PackagePlanAdded(
@@ -406,16 +405,14 @@ contract RanceProtocol is
      * @return packagePlans return array of package plans
      */
     function getAllPackagePlans() external view returns(PackagePlan[] memory){
-        uint length = packagePlans.length;
+        uint length = packagePlanIds.length;
         PackagePlan[] memory output = new PackagePlan[](length);
         uint index = 0;
         for (uint i = 0; i < length; i = i + 1) {
-            if(packagePlans[i].isActivated == true){
-                output[index] = packagePlans[i];
-                index = index + 1;
-            }
+            output[index] = planIdToPackagePlan[packagePlanIds[i]];
+            index = index + 1;
         }
-        return packagePlans;
+        return output;
     }
     
 

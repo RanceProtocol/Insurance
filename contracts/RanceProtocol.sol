@@ -441,7 +441,7 @@ contract RanceProtocol is
 
         totalInsuranceLocked[paymentToken] += insureAmount;
         uint startTimestamp = block.timestamp;
-        uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInSeconds).mul(30 days));
+        uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInSeconds));
         bytes32 _packageId = keccak256(abi.encodePacked(
             msg.sender,
             insureAmount,

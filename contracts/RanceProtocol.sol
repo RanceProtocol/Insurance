@@ -83,9 +83,9 @@ contract RanceProtocol is
     }
 
     /**
-     * @dev list of all packagePlan ids purchased per user
+     * @dev list of all package ids purchased per user
      */
-    mapping(address => bytes32[]) public userToPlans; 
+    mapping(address => bytes32[]) public userToPackageIds; 
 
     /**
      *  @dev retrieve packagePlan with packagePlan id
@@ -98,10 +98,6 @@ contract RanceProtocol is
      */
     mapping (bytes32 => Package) public packageIdToPackage;
 
-    /**
-     *  @dev retrieve user package with packagePlan id
-     */
-    mapping(bytes32 => mapping(address => Package)) public planToUserPackage;
 
     /**
      * @dev retrieve payment token  with name
@@ -470,9 +466,8 @@ contract RanceProtocol is
             paymentToken: paymentToken
         });
 
-        planToUserPackage[_planId][msg.sender] = package;
         packageIdToPackage[_packageId] = package;
-        userToPlans[msg.sender].push(_planId);
+        userToPackageIds[msg.sender].push(_packageId);
         
 
         emit InsuranceActivated(
@@ -486,10 +481,10 @@ contract RanceProtocol is
      * @return Package return array of user packages
      */
     function getAllUserPackages(address _user) external view returns(Package[] memory) {
-        uint length = userToPlans[_user].length;
+        uint length = userToPackageIds[_user].length;
         Package[] memory output = new Package[](length);
         for(uint i = 0; i < length; i = i + 1){
-            output[i] = planToUserPackage[userToPlans[_user][i]][_user];
+            output[i] = packageIdToPackage[userToPackageIds[_user][i]];
         }
         
         return output;
@@ -502,7 +497,7 @@ contract RanceProtocol is
     function cancel(bytes32 _packageId) external nonReentrant{
         require(packageExists(_packageId), "Rance Protocol: Package does not exist");
 
-        Package storage userPackage = planToUserPackage[packageIdToPackage[_packageId].planId][msg.sender];
+        Package storage userPackage = packageIdToPackage[_packageId];
         require(isPackageActive(userPackage) && 
         !userPackage.isCancelled, "Rance Protocol: Package Not Cancellable");
 
@@ -519,7 +514,7 @@ contract RanceProtocol is
         RANCE.safeTransferFrom(
             msg.sender,
             address(treasury), 
-            planIdToPackagePlan[packageIdToPackage[_packageId].planId].uninsureFee
+            planIdToPackagePlan[userPackage.planId].uninsureFee
         );
 
         treasury.withdrawToken(
@@ -543,7 +538,7 @@ contract RanceProtocol is
     function withdraw(bytes32 _packageId) external nonReentrant{
         require(packageExists(_packageId), "Rance Protocol: Package does not exist");
 
-        Package storage userPackage = planToUserPackage[packageIdToPackage[_packageId].planId][msg.sender];
+        Package storage userPackage = packageIdToPackage[_packageId];
         require(!isPackageActive(userPackage) && 
         !userPackage.isWithdrawn && !userPackage.isCancelled && 
         userPackage.endTimestamp.add(30 days) < block.timestamp,

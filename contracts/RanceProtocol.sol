@@ -189,7 +189,7 @@ contract RanceProtocol is
         bytes32 indexed _id,
         uint indexed _uninsureFee,
         uint8 indexed _insuranceFee,
-        uint32 indexed _periodInSeconds
+        uint32 _periodInSeconds
     );
 
 
@@ -283,7 +283,7 @@ contract RanceProtocol is
      * @param _planId the package plan id
      */
     function deactivatePackagePlan(bytes32 _planId) external onlyOwner{
-        require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
+        require(planIdToPackagePlan[_planId].planId == _planId, "Rance Protocol: PackagePlan does not exists");
 
         PackagePlan storage packagePlan = planIdToPackagePlan[_planId];
         packagePlan.isActivated = false;
@@ -308,7 +308,7 @@ contract RanceProtocol is
             _insuranceFee,
             _uninsureFee));
         
-        require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
+        require(planIdToPackagePlan[_planId].planId != _planId, "Rance Protocol: PackagePlan already exists");
 
         planIdToPackagePlan[_planId] = PackagePlan(
             _planId,
@@ -450,7 +450,7 @@ contract RanceProtocol is
             paymentToken,
             insureCoin));
 
-        require(!packageExists(_packageId), "Rance Protocol: Package exist");
+        require(packageIdToPackage[_packageId].packageId != _packageId, "Rance Protocol: Package exist");
 
         Package memory package = Package({
             user: msg.sender,
@@ -495,7 +495,7 @@ contract RanceProtocol is
      * @param _packageId id of package to cancel
      */
     function cancel(bytes32 _packageId) external nonReentrant{
-        require(packageExists(_packageId), "Rance Protocol: Package does not exist");
+        require(packageIdToPackage[_packageId].packageId == _packageId, "Rance Protocol: Package does not exist");
 
         Package storage userPackage = packageIdToPackage[_packageId];
         require(isPackageActive(userPackage) && 
@@ -536,7 +536,7 @@ contract RanceProtocol is
      * @param _packageId id of package to withdraw
      */
     function withdraw(bytes32 _packageId) external nonReentrant{
-        require(packageExists(_packageId), "Rance Protocol: Package does not exist");
+        require(packageIdToPackage[_packageId].packageId == _packageId, "Rance Protocol: Package does not exist");
 
         Package storage userPackage = packageIdToPackage[_packageId];
         require(!isPackageActive(userPackage) && 
@@ -574,7 +574,7 @@ contract RanceProtocol is
     function getInsureAmount(
         bytes32 _planId, 
         uint _amount) public view returns(uint){
-        require(planExists(_planId), "RanceProtocol: Plan does not exist");
+        require(planIdToPackagePlan[_planId].planId == _planId, "RanceProtocol: Plan does not exist");
         PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
         uint percentage = packagePlan.insuranceFee; 
         uint numerator = 10000;
@@ -582,34 +582,7 @@ contract RanceProtocol is
         return insureAmount;
     }
 
-    /**
-     * @notice Determines whether a package exists with the given id
-     * @param _packageId the id of a package
-     * @return true if package exists and its id is valid
-     */
-    function packageExists(bytes32 _packageId)private view returns (bool){
-        Package memory package = packageIdToPackage[_packageId];
-        if (keccak256(abi.encodePacked(package.packageId)) == "") {
-            return false;
-        }
-
-        return (keccak256(abi.encodePacked(package.packageId)) == keccak256(abi.encodePacked(_packageId)));
-    }
-
-    /**
-     * @notice Determines whether a package exists with the given id
-     * @param _planId the id of a package plan
-     * @return true if package plan exists and its id is valid
-     */
-    function planExists(bytes32 _planId)private view returns (bool){
-        PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
-        if (keccak256(abi.encodePacked(packagePlan.planId)) == "") {
-            return false;
-        }
-
-        return (keccak256(abi.encodePacked(packagePlan.planId)) == keccak256(abi.encodePacked(_planId)));
-    }
-
+    
 
     function _swap(
         address _to,

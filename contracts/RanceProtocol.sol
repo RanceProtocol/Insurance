@@ -450,6 +450,8 @@ contract RanceProtocol is
             paymentToken,
             insureCoin));
 
+        require(!packageExists(_packageId), "Rance Protocol: Package exist");
+
         Package memory package = Package({
             user: msg.sender,
             planId: _planId,

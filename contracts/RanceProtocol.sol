@@ -180,23 +180,23 @@ contract RanceProtocol is
     /**
      * @dev Emitted when a package plan is deactivated
      */
-    event PackagePlanDeactivated(bytes32 _id);
+    event PackagePlanDeactivated(bytes32 indexed _id);
 
     /**
      * @dev Emitted when a package plan is added
      */
     event PackagePlanAdded(
-        bytes32 _id,
-        uint _uninsureFee,
-        uint8 _insuranceFee,
-        uint32 _periodInSeconds
+        bytes32 indexed _id,
+        uint indexed _uninsureFee,
+        uint8 indexed _insuranceFee,
+        uint32 indexed _periodInSeconds
     );
 
 
     /**
      * @dev Emitted when the treasury address is set
      */
-    event TreasuryAddressSet(address _address);
+    event TreasuryAddressSet(address indexed _address);
 
     /**
      * @dev check that the address passed is not 0. 

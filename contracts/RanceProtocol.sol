@@ -585,15 +585,6 @@ contract RanceProtocol is
     }
 
     /**
-     * @notice retrieves the package end date
-     * @return endDate return the enddate of package
-     */
-    function retrievePackageEndDate(Package memory package) public view returns(uint) {
-
-        return package.startTimestamp.add(uint(planIdToPackagePlan[package.planId].periodInSeconds).mul(30 days));
-    }
-
-    /**
      * @notice Determines whether a package exists with the given id
      * @param _packageId the id of a package
      * @return true if package exists and its id is valid

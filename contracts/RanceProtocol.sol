@@ -58,7 +58,7 @@ contract RanceProtocol is
      */
     struct PackagePlan {
         bytes32 planId;
-        uint8 periodInMonths;
+        uint32 periodInSeconds;
         uint8 insuranceFee;
         uint uninsureFee;
         bool isActivated; 
@@ -193,7 +193,7 @@ contract RanceProtocol is
         bytes32 _id,
         uint _uninsureFee,
         uint8 _insuranceFee,
-        uint8 _periodInMonths
+        uint32 _periodInSeconds
     );
 
 
@@ -230,18 +230,18 @@ contract RanceProtocol is
         paymentTokenNameToAddress["MUSD"] = _paymentToken;
         totalInsuranceLocked[_paymentToken] = 0;
         noPaymentTokens = 1;
-        uint8[3] memory periodInMonths = [6,12,24];
+        uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint72[3] memory uninsureFees = [10 ether, 100 ether, 1000 ether];
         bytes32[3] memory ids = [
-            keccak256(abi.encodePacked(periodInMonths[0],insuranceFees[0],uninsureFees[0])),
-            keccak256(abi.encodePacked(periodInMonths[1],insuranceFees[1],uninsureFees[1])),
-            keccak256(abi.encodePacked(periodInMonths[2],insuranceFees[2],uninsureFees[2]))
+            keccak256(abi.encodePacked(periodInSeconds[0],insuranceFees[0],uninsureFees[0])),
+            keccak256(abi.encodePacked(periodInSeconds[1],insuranceFees[1],uninsureFees[1])),
+            keccak256(abi.encodePacked(periodInSeconds[2],insuranceFees[2],uninsureFees[2]))
         ];
         for (uint i = 0; i < 3; i = i + 1 ) {
             planIdToPackagePlan[ids[i]] = PackagePlan(
                 ids[i],
-                periodInMonths[i],
+                periodInSeconds[i],
                 insuranceFees[i],
                 uninsureFees[i],
                 true);
@@ -283,9 +283,9 @@ contract RanceProtocol is
 
     /**
      * @notice deactivate package plan
-     * @param _planIds the array of package plan id
+     * @param _planId the package plan id
      */
-    function deactivatePackagePlan(bytes32 memory _planId) external onlyOwner{
+    function deactivatePackagePlan(bytes32 _planId) external onlyOwner{
         require(!planExists(_planId), "Rance Protocol: PackagePlan already exists");
 
         PackagePlan storage packagePlan = planIdToPackagePlan[_planId];
@@ -297,17 +297,17 @@ contract RanceProtocol is
 
     /**
      * @notice adds package plan
-     * @param _periodInMonths the periods of the package in Months
+     * @param _periodInSeconds the periods of the package in Seconds
      * @param _insuranceFee the insurance fee for the package in percentage
      * @param _uninsureFee the penalty amount for insurance cancellation
      */
     function addPackagePlan(
-        uint8 _periodInMonths,
+        uint32 _periodInSeconds,
         uint8 _insuranceFee,
         uint _uninsureFee) external onlyOwner returns(bytes32){
 
         bytes32 _planId = keccak256(abi.encodePacked(
-            _periodInMonths,
+            _periodInSeconds,
             _insuranceFee,
             _uninsureFee));
         
@@ -315,7 +315,7 @@ contract RanceProtocol is
 
         planIdToPackagePlan[_planId] = PackagePlan(
             _planId,
-            _periodInMonths, 
+            _periodInSeconds, 
             _insuranceFee, 
             _uninsureFee,
             true
@@ -328,7 +328,7 @@ contract RanceProtocol is
             _planId,
             _uninsureFee, 
             _insuranceFee, 
-            _periodInMonths
+            _periodInSeconds
         );
 
         return _planId;
@@ -442,7 +442,7 @@ contract RanceProtocol is
 
         totalInsuranceLocked[paymentToken] += insureAmount;
         uint startTimestamp = block.timestamp;
-        uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInMonths).mul(30 days));
+        uint endTimestamp = (block.timestamp).add(uint(planIdToPackagePlan[_planId].periodInSeconds).mul(30 days));
         bytes32 _packageId = keccak256(abi.encodePacked(
             insureAmount,
             startTimestamp,
@@ -588,7 +588,7 @@ contract RanceProtocol is
      */
     function retrievePackageEndDate(Package memory package) public view returns(uint) {
 
-        return package.startTimestamp.add(uint(planIdToPackagePlan[package.planId].periodInMonths).mul(30 days));
+        return package.startTimestamp.add(uint(planIdToPackagePlan[package.planId].periodInSeconds).mul(30 days));
     }
 
     /**

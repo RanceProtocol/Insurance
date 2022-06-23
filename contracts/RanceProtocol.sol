@@ -228,6 +228,7 @@ contract RanceProtocol is
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
         RANCE = IERC20Upgradeable(_rance);
         paymentTokenNameToAddress["MUSD"] = _paymentToken;
+        paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
         noPaymentTokens = 1;
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];

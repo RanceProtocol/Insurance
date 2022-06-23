@@ -577,8 +577,9 @@ contract RanceProtocol is
         require(planIdToPackagePlan[_planId].planId == _planId, "RanceProtocol: Plan does not exist");
         PackagePlan memory packagePlan = planIdToPackagePlan[_planId];
         uint percentage = packagePlan.insuranceFee; 
-        uint numerator = 10000;
-        uint insureAmount = ((numerator.div(percentage.add(100))).mul(_amount)).div(100);
+        uint numerator = _amount.mul(100);
+        uint denominator = percentage.add(100);
+        uint insureAmount = numerator.div(denominator);
         return insureAmount;
     }
 

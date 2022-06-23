@@ -639,7 +639,7 @@ contract RanceProtocol is
 
 
     function isPackageActive(Package memory package) public view returns(bool){
-        return block.timestamp <= retrievePackageEndDate(package);
+        return block.timestamp <= package.endTimestamp;
     }
 
 }

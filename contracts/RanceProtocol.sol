@@ -355,7 +355,7 @@ contract RanceProtocol is
     @param _token ERC20 token address
     */
     function removePaymentToken(address _token) external onlyOwner {
-        require(paymentTokenAdded[_token], "Rance Protocol:paymentToken already added");
+        require(paymentTokenAdded[_token], "Rance Protocol:paymentToken does not exist");
         paymentTokenAdded[_token] = false;
         noPaymentTokens -= 1;
         IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
@@ -388,7 +388,7 @@ contract RanceProtocol is
     */
     function removeInsureCoins(address[] memory _tokens) external onlyOwner {
         for (uint i = 0; i < _tokens.length; i = i + 1) {
-            require(!insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin already added");
+            require(insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin does not exist");
             insureCoinAdded[_tokens[i]] = false;
             noInsureCoins -= 1;
 
@@ -429,6 +429,8 @@ contract RanceProtocol is
         string memory _paymentToken
         ) external{
         require(planIdToPackagePlan[_planId].isActivated, "Rance Protocol: PackagePlan not active");
+        require(insureCoinAdded[insureCoinNameToAddress[_insureCoin]], "Rance Protocol:insureCoin not supported");
+        require(paymentTokenAdded[paymentTokenNameToAddress[_paymentToken]], "Rance Protocol:paymentToken not supported");
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
         address paymentToken = paymentTokenNameToAddress[_paymentToken];

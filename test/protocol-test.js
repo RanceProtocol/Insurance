@@ -23,11 +23,12 @@ describe("Rance Protocol Test", () => {
     planId1,
     planId2,
     planId3,
-    periodInMonths,
+    periodInSeconds,
     insuranceFees,
     uninsureFees,
     amount,
-    paymentToken2;
+    paymentToken2,
+    insureCoin2;
 
   beforeEach(async () => {
     [admin, user] = await ethers.getSigners();
@@ -51,6 +52,7 @@ describe("Rance Protocol Test", () => {
     paymentToken = await MockERC20.deploy("MUSD Token", "MUSD");
     paymentToken2 = await MockERC20.deploy("BUSD Token", "BUSD");
     insureCoin = await MockERC20.deploy("Bitcoin Token", "WBTC");
+    insureCoin2 = await MockERC20.deploy("Ether Token", "WETH");
     treasury = await RanceTreasury.deploy(adminAddress);
     factory = await Factory.deploy(adminAddress);
     const weth = await Weth9.deploy();
@@ -101,31 +103,39 @@ describe("Rance Protocol Test", () => {
 
     await treasury.setInsuranceProtocolAddress(protocol.address);
 
-    periodInMonths = [6, 12, 24];
+    periodInSeconds = [15780000, 31560000, 63120000];
     insuranceFees = [100, 50, 25];
     uninsureFees = [
-      ethers.utils.parseUnits("1"),
       ethers.utils.parseUnits("10"),
       ethers.utils.parseUnits("100"),
+      ethers.utils.parseUnits("1000"),
     ];
 
     planId1 = ethers.utils.solidityKeccak256(
-      ["uint8", "uint8", "uint72"],
-      [periodInMonths[0], insuranceFees[0], uninsureFees[0]]
+      ["uint32", "uint8", "uint72"],
+      [periodInSeconds[0], insuranceFees[0], uninsureFees[0]]
     );
 
     planId2 = ethers.utils.solidityKeccak256(
-      ["uint8", "uint8", "uint72"],
-      [periodInMonths[1], insuranceFees[1], uninsureFees[1]]
+      ["uint32", "uint8", "uint72"],
+      [periodInSeconds[1], insuranceFees[1], uninsureFees[1]]
     );
 
     planId3 = ethers.utils.solidityKeccak256(
-      ["uint8", "uint8", "uint72"],
-      [periodInMonths[2], insuranceFees[2], uninsureFees[2]]
+      ["uint32", "uint8", "uint72"],
+      [periodInSeconds[2], insuranceFees[2], uninsureFees[2]]
     );
 
     amount = ethers.utils.parseUnits("200");
-    await protocol.insure(planId1, amount, insureCoin.address, "MUSD");
+
+    await protocol.addInsureCoins(["WBTC"], [insureCoin.address]);
+    await protocol.insure(
+      planId1,
+      amount,
+      [paymentToken.address, insureCoin.address],
+      "WBTC",
+      "MUSD"
+    );
 
     elapsedTime = 360 * 24 * 60 * 60;
   });
@@ -134,12 +144,10 @@ describe("Rance Protocol Test", () => {
     expect(await protocol.uniswapRouter()).to.equal(router.address);
     expect(await protocol.treasury()).to.equal(treasury.address);
     expect(await protocol.RANCE()).to.equal(rance.address);
-    expect(await protocol.totalInsuranceLocked()).to.equal(
-      ethers.utils.parseUnits("100")
-    );
     expect(await protocol.noPaymentTokens()).to.equal(
       ethers.BigNumber.from("1")
     );
+    expect(await protocol.noInsureCoins()).to.equal(ethers.BigNumber.from("1"));
   });
 
   it("Should update treasury address", async () => {
@@ -172,6 +180,12 @@ describe("Rance Protocol Test", () => {
       .to.be.reverted;
   });
 
+  it("Should check the total insurance locked for a token", async () => {
+    expect(
+      await protocol.getTotalInsuranceLocked(paymentToken.address)
+    ).to.be.equal(await protocol.getInsureAmount(planId1, amount));
+  });
+
   it("Should add a payment Token", async () => {
     const tx = await protocol.addPaymentToken("BUSD", paymentToken2.address);
     const receipt = await tx.wait();
@@ -179,10 +193,63 @@ describe("Rance Protocol Test", () => {
     expect(actualAddress).to.equal(paymentToken2.address);
   });
 
+  it("Should only add a payment Token that is not added", async () => {
+    expect(protocol.addPaymentToken("BUSD", paymentToken.address)).to.be
+      .reverted;
+  });
+
+  it("Should remove a payment Token", async () => {
+    const tx = await protocol.removePaymentToken(paymentToken.address);
+    const receipt = await tx.wait();
+    const removedAddress = receipt.events[1].args[0];
+    expect(removedAddress).to.equal(paymentToken.address);
+  });
+
+  it("Should only remove a payment Token that is added", async () => {
+    expect(protocol.removePaymentToken(paymentToken2.address)).to.be.reverted;
+  });
+
   it("Should only allow admin add payment token", async () => {
     expect(
       protocol.connect(user).addPaymentToken("BUSD", paymentToken2.address)
     ).to.be.reverted;
+  });
+
+  it("Should only allow admin remove payment token", async () => {
+    expect(protocol.connect(user).removePaymentToken(paymentToken.address)).to
+      .be.reverted;
+  });
+
+  it("Should add an InsureCoin", async () => {
+    const tx = await protocol.addInsureCoins(["WETH"], [insureCoin2.address]);
+    const receipt = await tx.wait();
+    const actualAddress = receipt.events[0].args[1];
+    expect(actualAddress).to.equal(insureCoin2.address);
+  });
+
+  it("Should only add an InsureCoin that is not added", async () => {
+    expect(protocol.addInsureCoins("WBTC", insureCoin.address)).to.be.reverted;
+  });
+
+  it("Should remove an InsureCoin", async () => {
+    const tx = await protocol.removeInsureCoins([insureCoin.address]);
+    const receipt = await tx.wait();
+    const removedAddress = receipt.events[0].args[0];
+    expect(removedAddress).to.equal(insureCoin.address);
+  });
+
+  it("Should only remove an InsureCoin that is added", async () => {
+    expect(protocol.removeInsureCoins(insureCoin2.address)).to.be.reverted;
+  });
+
+  it("Should only allow admin add an InsureCoin", async () => {
+    expect(protocol.connect(user).addInsureCoins("WETH", insureCoin2.address))
+      .to.be.reverted;
+  });
+
+  it("Should only allow admin remove InsureCoin", async () => {
+    expect(protocol.connect(user).removeInsureCoins(insureCoin.address)).to.be
+      .reverted;
   });
 
   it("Should withdraw BNB/CRO from treasury contract", async () => {
@@ -235,120 +302,131 @@ describe("Rance Protocol Test", () => {
 
   it("Should returns all package plans", async () => {
     const tx = await protocol.getAllPackagePlans();
-    const periodInMonths = [6, 12, 24];
-    const insuranceFees = [100, 50, 25];
-    const uninsureFees = [
-      ethers.utils.parseUnits("1"),
-      ethers.utils.parseUnits("10"),
-      ethers.utils.parseUnits("100"),
-    ];
     for (let i = 0; i < tx.length; i++) {
       const planId = ethers.utils.solidityKeccak256(
-        ["uint8", "uint8", "uint72"],
-        [periodInMonths[i], insuranceFees[i], uninsureFees[i]]
+        ["uint32", "uint8", "uint72"],
+        [periodInSeconds[i], insuranceFees[i], uninsureFees[i]]
       );
       expect(tx[i].planId).to.equal(planId);
-      expect(tx[i].periodInMonths).to.equal(periodInMonths[i]);
+      expect(tx[i].periodInSeconds).to.equal(periodInSeconds[i]);
       expect(tx[i].insuranceFee).to.equal(insuranceFees[i]);
       expect(tx[i].uninsureFee).to.equal(uninsureFees[i]);
+      expect(tx[i].isActivated).to.be.true;
     }
   });
 
-  /* it("Should update package plan", async () => {
-    const uninsureFee = ethers.utils.parseUnits("20");
-    await protocol.updatePackagePlans(
-      [planId2],
-      [periodInMonths[1]],
-      [insuranceFees[1]],
-      [uninsureFee]
-    );
+  it("Should deactivate package plan", async () => {
+    await protocol.deactivatePackagePlan(planId1);
     const tx = await protocol.getAllPackagePlans();
-    expect(tx[1].planId).to.equal(planId2);
-    expect(tx[1].periodInMonths).to.equal(periodInMonths[1]);
-    expect(tx[1].insuranceFee).to.equal(insuranceFees[1]);
-    expect(tx[1].uninsureFee).to.equal(uninsureFee);
+    expect(tx[0].isActivated).to.be.false;
   });
 
-  it("Should update package plans", async () => {
-    const uninsureFee1 = ethers.utils.parseUnits("2");
-    const uninsureFee2 = ethers.utils.parseUnits("20");
-    const uninsureFee3 = ethers.utils.parseUnits("200");
-    await protocol.updatePackagePlans(
-      [planId1, planId2, planId3],
-      [periodInMonths[0], periodInMonths[1], periodInMonths[2]],
-      [insuranceFees[0], insuranceFees[1], insuranceFees[2]],
-      [uninsureFee1, uninsureFee2, uninsureFee3]
+  it("Should only deactivate package plan with valid plan id", async () => {
+    const nonExistentPlanId = ethers.utils.solidityKeccak256(
+      ["uint32", "uint8", "uint72"],
+      [1656049378, 20, ethers.utils.parseUnits("1000")]
     );
-    const tx = await protocol.getAllPackagePlans();
-    expect(tx[0].planId).to.equal(planId1);
-    expect(tx[0].periodInMonths).to.equal(periodInMonths[0]);
-    expect(tx[0].insuranceFee).to.equal(insuranceFees[0]);
-    expect(tx[0].uninsureFee).to.equal(uninsureFee1);
-    expect(tx[1].planId).to.equal(planId2);
-    expect(tx[1].periodInMonths).to.equal(periodInMonths[1]);
-    expect(tx[1].insuranceFee).to.equal(insuranceFees[1]);
-    expect(tx[1].uninsureFee).to.equal(uninsureFee2);
-    expect(tx[2].planId).to.equal(planId3);
-    expect(tx[2].periodInMonths).to.equal(periodInMonths[2]);
-    expect(tx[2].insuranceFee).to.equal(insuranceFees[2]);
-    expect(tx[2].uninsureFee).to.equal(uninsureFee3);
-  }); */
+    expect(protocol.deactivatePackagePlan(nonExistentPlanId)).to.be.reverted;
+  });
+
+  it("Should only allow admin deactivate package plan", async () => {
+    expect(protocol.connect(user).deactivatePackagePlan(planId1)).to.be
+      .reverted;
+  });
 
   it("Should add a new package plan", async () => {
-    const periodInMonths = 48;
+    const periodInSeconds = 126240000;
     const insuranceFee = 5;
     const uninsureFee = ethers.utils.parseUnits("1000");
 
-    await protocol.addPackagePlan(periodInMonths, insuranceFee, uninsureFee);
-
-    const expectedPlanId = ethers.utils.solidityKeccak256(
-      ["uint8", "uint8", "uint"],
-      [periodInMonths, insuranceFee, uninsureFee]
+    const tx = await protocol.addPackagePlan(
+      periodInSeconds,
+      insuranceFee,
+      uninsureFee
     );
 
-    const actualPlanId = await protocol.getAllPackagePlans();
-    expect(actualPlanId[3].planId).to.equal(expectedPlanId);
+    const receipt = await tx.wait();
+
+    const expectedPlanId = ethers.utils.solidityKeccak256(
+      ["uint32", "uint8", "uint"],
+      [periodInSeconds, insuranceFee, uninsureFee]
+    );
+    expect(receipt.events[0].args[0]).to.be.equal(expectedPlanId);
   });
 
   it("Should only allow admin add a new package plan", async () => {
-    const periodInMonths = 48;
+    const periodInSeconds = 126240000;
     const insuranceFee = 5;
     const uninsureFee = ethers.utils.parseUnits("1000");
 
-    expect(protocol.addPackagePlan(periodInMonths, insuranceFee, uninsureFee))
+    expect(protocol.addPackagePlan(periodInSeconds, insuranceFee, uninsureFee))
       .to.be.reverted;
+  });
+
+  it("Should only add a new package plan thats does not exist", async () => {
+    expect(
+      protocol.addPackagePlan(
+        periodInSeconds[0],
+        insuranceFees[0],
+        uninsureFees[0]
+      )
+    ).to.be.reverted;
   });
 
   it("Should purchase a package plan", async () => {
     const amount = ethers.utils.parseUnits("200");
-    const insureAmount = await protocol.getInsureAmount(planId2, amount);
     const tx = await protocol.insure(
       planId2,
       amount,
-      insureCoin.address,
+      [paymentToken.address, insureCoin.address],
+      "WBTC",
       "MUSD"
     );
 
     const receipt = await tx.wait();
-    expect(receipt.events[8].args[0]).to.equal(planId2);
-    expect(receipt.events[8].args[1]).to.equal(insureAmount);
-    expect(receipt.events[8].args[3]).to.equal(await admin.getAddress());
-    expect(receipt.events[8].args[4]).to.equal(insureCoin.address);
-    expect(receipt.events[8].args[5]).to.equal(paymentToken.address);
+    expect(receipt.events[8].args[1]).to.equal(await admin.getAddress());
   });
 
   it("Should only purchase valid package plan", async () => {
     const amount = ethers.utils.parseUnits("200");
     const nonExistentPlanId = ethers.utils.solidityKeccak256(
-      ["uint8", "uint8", "uint"],
-      [4, 20, ethers.utils.parseUnits("1000")]
+      ["uint32", "uint8", "uint"],
+      [126240000, 20, ethers.utils.parseUnits("1000")]
     );
     expect(
       protocol.insure(
         nonExistentPlanId,
         amount,
-        insureCoin.address,
-        paymentToken.address
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD"
+      )
+    ).to.be.reverted;
+  });
+
+  it("Should only purchase package plan with supported token", async () => {
+    const amount = ethers.utils.parseUnits("200");
+    expect(
+      protocol.insure(
+        planId2,
+        amount,
+        [paymentToken.address, insureCoin2.address],
+        "WETH",
+        "MUSD"
+      )
+    ).to.be.reverted;
+  });
+
+  it("Should only purchase active package plan", async () => {
+    const amount = ethers.utils.parseUnits("200");
+    await protocol.deactivatePackagePlan(planId1);
+    expect(
+      protocol.insure(
+        planId1,
+        amount,
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD"
       )
     ).to.be.reverted;
   });
@@ -366,33 +444,48 @@ describe("Rance Protocol Test", () => {
   });
 
   it("Should cancel package plan", async () => {
+    let tx = await protocol.getAllUserPackages(admin.getAddress());
     await rance.approve(protocol.address, ethers.utils.parseUnits("900000"));
 
-    await protocol.cancel(planId1);
+    await protocol.cancel(tx[0].packageId);
 
-    const tx = await protocol.getAllUserPackages(admin.getAddress());
+    tx = await protocol.getAllUserPackages(admin.getAddress());
+    const ranceBalance = await rance.balanceOf(treasury.address);
     expect(tx[0].isCancelled).to.be.true;
+    expect(ranceBalance).to.be.equal(ethers.utils.parseUnits("10"));
   });
 
   it("Should only cancel active package plan", async () => {
     await ethers.provider.send("evm_increaseTime", [elapsedTime]);
     await ethers.provider.send("evm_mine", []);
 
+    const tx = await protocol.getAllUserPackages(admin.getAddress());
     await rance.approve(protocol.address, ethers.utils.parseUnits("900000"));
 
-    expect(protocol.cancel(planId1)).to.be.reverted;
+    expect(protocol.cancel(tx[0].packageId)).to.be.reverted;
   });
 
   it("Should only withdraw package plan when expired", async () => {
-    expect(protocol.withdraw(planId1)).to.be.reverted;
+    const tx = await protocol.getAllUserPackages(admin.getAddress());
+    expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
   });
 
   it("Should withdraw package plan when expired", async () => {
+    elapsedTime = 190 * 24 * 60 * 60;
     await ethers.provider.send("evm_increaseTime", [elapsedTime]);
     await ethers.provider.send("evm_mine", []);
 
-    await protocol.withdraw(planId1);
-    const tx = await protocol.getAllUserPackages(admin.getAddress());
+    let tx = await protocol.getAllUserPackages(admin.getAddress());
+    await protocol.withdraw(tx[0].packageId);
+    tx = await protocol.getAllUserPackages(admin.getAddress());
     expect(tx[0].isWithdrawn).to.be.true;
+  });
+
+  it("Should only withdraw package plan that does not elapsed 30days after expiration", async () => {
+    await ethers.provider.send("evm_increaseTime", [elapsedTime]);
+    await ethers.provider.send("evm_mine", []);
+
+    const tx = await protocol.getAllUserPackages(admin.getAddress());
+    expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
   });
 });

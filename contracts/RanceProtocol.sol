@@ -422,9 +422,9 @@ contract RanceProtocol is
      */
     function insure
     (
-        address[] memory path,
         bytes32 _planId,
         uint _amount,
+        address[] memory path,
         string memory _insureCoin,
         string memory _paymentToken
         ) external{
@@ -435,11 +435,6 @@ contract RanceProtocol is
         uint insuranceFee = _amount.sub(insureAmount);
         address paymentToken = paymentTokenNameToAddress[_paymentToken];
         address insureCoin = insureCoinNameToAddress[_insureCoin];
-
-        IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
-        IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
-        IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
-        uint swapOutput = _swap(msg.sender, path, insureAmount);
 
         totalInsuranceLocked[paymentToken] += insureAmount;
         uint startTimestamp = block.timestamp;
@@ -459,7 +454,7 @@ contract RanceProtocol is
             planId: _planId,
             packageId: _packageId,
             initialDeposit: insureAmount,
-            insureOutput: swapOutput,
+            insureOutput: uniswapRouter.getAmountsOut(insureAmount, path)[path.length - 1],
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
             isCancelled: false,
@@ -471,6 +466,10 @@ contract RanceProtocol is
         packageIdToPackage[_packageId] = package;
         userToPackageIds[msg.sender].push(_packageId);
         
+        IERC20Upgradeable(paymentToken).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20Upgradeable(paymentToken).approve(address(treasury), insuranceFee);
+        IERC20Upgradeable(paymentToken).safeTransfer(address(treasury), insuranceFee);
+        _swap(msg.sender, path, insureAmount);
 
         emit InsuranceActivated(
             _packageId,
@@ -591,12 +590,10 @@ contract RanceProtocol is
         address _to,
         address[] memory path,
         uint _amount
-    ) private returns(uint){
+    ) private{
         uint deadline = block.timestamp;
         uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[path.length - 1];
-        uint[] memory amounts = uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
-
-        return amounts[1];
+        uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
     }
 
 

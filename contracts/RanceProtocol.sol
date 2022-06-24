@@ -541,7 +541,7 @@ contract RanceProtocol is
         Package storage userPackage = packageIdToPackage[_packageId];
         require(!isPackageActive(userPackage) && 
         !userPackage.isWithdrawn && !userPackage.isCancelled && 
-        userPackage.endTimestamp.add(30 days) < block.timestamp,
+        block.timestamp <= userPackage.endTimestamp.add(30 days),
          "Rance Protocol: Package Not Withdrawable");
 
         userPackage.isWithdrawn = true;

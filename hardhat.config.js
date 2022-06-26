@@ -34,9 +34,9 @@ module.exports = {
     },
   },
   networks: {
-    bsctestnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-      chainId: 97,
+    crotestnet: {
+      url: "https://cronos-testnet-3.crypto.org:8545",
+      chainId: 338,
       accounts: {
         mnemonic,
         path: "m/44'/60'/0'/0",
@@ -54,9 +54,9 @@ module.exports = {
       },
       timeout: 150000,
     },
-    bscmainnet: {
-      url: "https://bsc-dataseed.binance.org",
-      chainId: 56,
+    cromainnet: {
+      url: "https://mmf-rpc.xstaking.sg",
+      chainId: 25,
       accounts: {
         mnemonic,
         path: "m/44'/60'/0'/0",

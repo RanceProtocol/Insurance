@@ -13,6 +13,9 @@ contract RanceTreasury is AccessControl, IRanceTreasury{
     //protocol address
     address public protocol;
 
+    //create a mapping so other addresses can interact with this wallet. 
+    mapping(address => bool) private _admins;
+
     // Event triggered once an address withdraws from the contract
     event Withdraw(address indexed user, uint amount);
 
@@ -30,6 +33,7 @@ contract RanceTreasury is AccessControl, IRanceTreasury{
 
     constructor(address _admin){
         _setupRole("admin", _admin); 
+        _admins[_admin] = true;
     }
 
 
@@ -62,6 +66,22 @@ contract RanceTreasury is AccessControl, IRanceTreasury{
         protocol = _address;
         _grantRole("protocol", protocol);
         emit InsuranceProtocolSet(_address);
+    }
+
+    //this function is used to add admin of the treasury.  OnlyOwner can add addresses.
+    function addAdmin(address admin) 
+        onlyRole("admin")
+        public {
+       _admins[admin] = true;
+        _grantRole("admin", admin);
+    }
+    
+    //remove an admin from the treasury.
+    function removeAdmin(address admin)
+        onlyRole("admin")
+        public {
+        _admins[admin] = false;   
+        _revokeRole("admin", admin);
     }
 
 

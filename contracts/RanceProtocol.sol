@@ -40,17 +40,17 @@ contract RanceProtocol is
     bytes32[] public packagePlanIds;
 
     /** 
-    * @dev Total number of payment token
+    * @dev array of payment token
     */
 
-    uint public noPaymentTokens;
+    string[] public paymentTokens;
 
 
     /** 
-    * @dev Total number of insure coins
+    * @dev array of insure coins
     */
 
-    uint public noInsureCoins;
+    string[] public insureCoins;
 
 
     /**
@@ -226,7 +226,7 @@ contract RanceProtocol is
         paymentTokenNameToAddress["MUSD"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
-        noPaymentTokens = 1;
+        paymentTokens.push("MUSD");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint72[3] memory uninsureFees = [10 ether, 100 ether, 1000 ether];
@@ -343,7 +343,7 @@ contract RanceProtocol is
         paymentTokenAdded[_token] = true;
         paymentTokenNameToAddress[_tokenName] = _token;
         totalInsuranceLocked[_token] = 0;
-        noPaymentTokens += 1;
+        paymentTokens.push(_tokenName);
         IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
         emit PaymentTokenAdded(_tokenName, _token);
@@ -352,12 +352,17 @@ contract RanceProtocol is
     /**
     @notice Method for removing payment token
     @dev Only admin
-    @param _token ERC20 token address
+    @param _tokenName ERC20 token address
     */
-    function removePaymentToken(address _token) external onlyOwner {
+    function removePaymentToken(string memory _tokenName) external onlyOwner {
+        address _token = paymentTokenNameToAddress[_tokenName];
         require(paymentTokenAdded[_token], "Rance Protocol:paymentToken does not exist");
         paymentTokenAdded[_token] = false;
-        noPaymentTokens -= 1;
+        for (uint i = 0; i < paymentTokens.length; i = i + 1) {
+            if(keccak256(abi.encodePacked(paymentTokens[i])) == keccak256(abi.encodePacked(_tokenName))){
+                delete paymentTokens[i];
+            }
+        }
         IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
 
         emit PaymentTokenRemoved(_token);
@@ -375,7 +380,7 @@ contract RanceProtocol is
             require(!insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin already added");
             insureCoinAdded[_tokens[i]] = true;
             insureCoinNameToAddress[_tokenNames[i]] = _tokens[i];
-            noInsureCoins += 1;
+            insureCoins.push(_tokenNames[i]);
 
             emit InsureCoinAdded(_tokenNames[i], _tokens[i]);
         }
@@ -384,15 +389,18 @@ contract RanceProtocol is
     /**
     @notice Method for removing insure coins
     @dev Only admin
-    @param _tokens array of ERC20 token address
+    @param _tokenNames array of ERC20 token address
     */
-    function removeInsureCoins(address[] memory _tokens) external onlyOwner {
-        for (uint i = 0; i < _tokens.length; i = i + 1) {
-            require(insureCoinAdded[_tokens[i]], "Rance Protocol:insureCoin does not exist");
-            insureCoinAdded[_tokens[i]] = false;
-            noInsureCoins -= 1;
+    function removeInsureCoins(string[] memory _tokenNames) external onlyOwner {
+        for (uint i = 0; i < _tokenNames.length; i = i + 1) {
+            address _token = insureCoinNameToAddress[_tokenNames[i]];
+            require(insureCoinAdded[_token], "Rance Protocol:insureCoin does not exist");
+            insureCoinAdded[_token] = false;
+            if(keccak256(abi.encodePacked(insureCoins[i])) == keccak256(abi.encodePacked(_tokenNames[i]))){
+                delete paymentTokens[i];
+            }
 
-            emit InsureCoinRemoved(_tokens[i]);
+            emit InsureCoinRemoved(_token);
         }
     }
 

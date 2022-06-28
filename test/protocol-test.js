@@ -33,7 +33,7 @@ describe("Rance Protocol Test", () => {
   beforeEach(async () => {
     [admin, user] = await ethers.getSigners();
     provider = waffle.provider;
-    const adminAddress = process.env.ADMIN_ADDRESS;
+    const adminAddress = admin.getAddress();
     const RanceTreasury = await ethers.getContractFactory("RanceTreasury");
     const RanceProtocol = await ethers.getContractFactory("RanceProtocol");
     const MockERC20 = await ethers.getContractFactory("MockERC20");
@@ -144,10 +144,6 @@ describe("Rance Protocol Test", () => {
     expect(await protocol.uniswapRouter()).to.equal(router.address);
     expect(await protocol.treasury()).to.equal(treasury.address);
     expect(await protocol.RANCE()).to.equal(rance.address);
-    expect(await protocol.noPaymentTokens()).to.equal(
-      ethers.BigNumber.from("1")
-    );
-    expect(await protocol.noInsureCoins()).to.equal(ethers.BigNumber.from("1"));
   });
 
   it("Should update treasury address", async () => {
@@ -199,14 +195,14 @@ describe("Rance Protocol Test", () => {
   });
 
   it("Should remove a payment Token", async () => {
-    const tx = await protocol.removePaymentToken(paymentToken.address);
+    const tx = await protocol.removePaymentToken("MUSD");
     const receipt = await tx.wait();
     const removedAddress = receipt.events[1].args[0];
     expect(removedAddress).to.equal(paymentToken.address);
   });
 
   it("Should only remove a payment Token that is added", async () => {
-    expect(protocol.removePaymentToken(paymentToken2.address)).to.be.reverted;
+    expect(protocol.removePaymentToken("BUSD")).to.be.reverted;
   });
 
   it("Should only allow admin add payment token", async () => {
@@ -216,8 +212,7 @@ describe("Rance Protocol Test", () => {
   });
 
   it("Should only allow admin remove payment token", async () => {
-    expect(protocol.connect(user).removePaymentToken(paymentToken.address)).to
-      .be.reverted;
+    expect(protocol.connect(user).removePaymentToken("MUSD")).to.be.reverted;
   });
 
   it("Should add an InsureCoin", async () => {
@@ -232,14 +227,14 @@ describe("Rance Protocol Test", () => {
   });
 
   it("Should remove an InsureCoin", async () => {
-    const tx = await protocol.removeInsureCoins([insureCoin.address]);
+    const tx = await protocol.removeInsureCoins(["WBTC"]);
     const receipt = await tx.wait();
     const removedAddress = receipt.events[0].args[0];
     expect(removedAddress).to.equal(insureCoin.address);
   });
 
   it("Should only remove an InsureCoin that is added", async () => {
-    expect(protocol.removeInsureCoins(insureCoin2.address)).to.be.reverted;
+    expect(protocol.removeInsureCoins("WETH")).to.be.reverted;
   });
 
   it("Should only allow admin add an InsureCoin", async () => {
@@ -248,8 +243,7 @@ describe("Rance Protocol Test", () => {
   });
 
   it("Should only allow admin remove InsureCoin", async () => {
-    expect(protocol.connect(user).removeInsureCoins(insureCoin.address)).to.be
-      .reverted;
+    expect(protocol.connect(user).removeInsureCoins("WBTC")).to.be.reverted;
   });
 
   it("Should withdraw BNB/CRO from treasury contract", async () => {

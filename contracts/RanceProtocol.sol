@@ -277,6 +277,29 @@ contract RanceProtocol is
         return totalInsuranceLocked[_token];
     }
 
+    /**
+     * @notice get the array of payment tokens
+     * @return paymentTokens the array of payment token
+     */
+    function getPaymentTokens()
+        external view returns(string[] memory)
+    {
+        return paymentTokens;
+    }
+
+
+    /**
+     * @notice get the array of  insure coins
+     * @return insureCoins the array of insure coins
+     */
+    function getInsureCoins()
+        external view returns(string[] memory)
+    {
+        return insureCoins;
+    }
+
+   
+
 
     /**
      * @notice deactivate package plan
@@ -397,7 +420,7 @@ contract RanceProtocol is
             require(insureCoinAdded[_token], "Rance Protocol:insureCoin does not exist");
             insureCoinAdded[_token] = false;
             if(keccak256(abi.encodePacked(insureCoins[i])) == keccak256(abi.encodePacked(_tokenNames[i]))){
-                delete paymentTokens[i];
+                delete insureCoins[i];
             }
 
             emit InsureCoinRemoved(_token);

@@ -156,26 +156,6 @@ describe("Rance Protocol Test", () => {
       .reverted;
   });
 
-  it("Should returns true if account is authorised in the treasury contract", async () => {
-    expect(await treasury.isAuthorized(admin.getAddress())).to.be.true;
-  });
-
-  it("Should returns false if account is not authorised in the treasury contract", async () => {
-    expect(await treasury.isAuthorized(router.address)).to.be.false;
-  });
-
-  it("Should set protocol address", async () => {
-    const tx = await treasury.setInsuranceProtocolAddress(protocol.address);
-    const receipt = await tx.wait();
-    const actualAddress = receipt.events[0].args[1];
-    expect(actualAddress).to.equal(protocol.address);
-  });
-
-  it("Should only allow admin set protocol address", async () => {
-    expect(treasury.connect(user).setInsuranceProtocolAddress(treasury.address))
-      .to.be.reverted;
-  });
-
   it("Should check the total insurance locked for a token", async () => {
     expect(
       await protocol.getTotalInsuranceLocked(paymentToken.address)
@@ -244,54 +224,6 @@ describe("Rance Protocol Test", () => {
 
   it("Should only allow admin remove InsureCoin", async () => {
     expect(protocol.connect(user).removeInsureCoins("WBTC")).to.be.reverted;
-  });
-
-  it("Should withdraw BNB/CRO from treasury contract", async () => {
-    const amount = ethers.utils.parseUnits("50");
-    await admin.sendTransaction({ to: treasury.address, value: amount });
-
-    const tx = await treasury.withdraw(amount);
-    const contractBalance = await provider.getBalance(treasury.address);
-    const receipt = await tx.wait();
-    expect(contractBalance).to.equal(ethers.BigNumber.from(0));
-    expect(receipt.events[0].args[0]).to.equal(await admin.getAddress());
-    expect(receipt.events[0].args[1]).to.equal(amount);
-  });
-
-  it("Should only allow admin withdraw BNB/CRO from treasury contract", async () => {
-    const amount = ethers.utils.parseUnits("50");
-    await admin.sendTransaction({ to: treasury.address, value: amount });
-
-    expect(treasury.connect(user).withdraw(amount)).to.be.reverted;
-  });
-
-  it("Should withdraw token from treasury contract", async () => {
-    const amount = ethers.utils.parseUnits("50");
-    await paymentToken.transfer(treasury.address, amount);
-
-    await paymentToken.approve(user.getAddress(), amount);
-    const tx = await treasury.withdrawToken(
-      paymentToken.address,
-      user.getAddress(),
-      amount
-    );
-    const userBalance = await paymentToken.balanceOf(user.getAddress());
-    const receipt = await tx.wait();
-    expect(userBalance).to.equal(amount);
-    expect(receipt.events[1].args[0]).to.equal(await user.getAddress());
-    expect(receipt.events[1].args[1]).to.equal(amount);
-  });
-
-  it("Should allow only authorised account withdraw token from treasury contract", async () => {
-    const amount = ethers.utils.parseUnits("50");
-    await paymentToken.transfer(treasury.address, amount);
-
-    await paymentToken.approve(user.getAddress(), amount);
-    expect(
-      treasury
-        .connect(user)
-        .withdrawToken(paymentToken.address, user.getAddress(), amount)
-    ).to.be.reverted;
   });
 
   it("Should returns all package plans", async () => {

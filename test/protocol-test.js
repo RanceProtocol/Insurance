@@ -301,7 +301,8 @@ describe("Rance Protocol Test", () => {
 
   it("Should purchase a package plan", async () => {
     const amount = ethers.utils.parseUnits("200");
-    const tx = await protocol.insure(
+    const treasuryBalance = await paymentToken.balanceOf(treasury.address);
+    await protocol.insure(
       planId2,
       amount,
       [paymentToken.address, insureCoin.address],
@@ -309,8 +310,11 @@ describe("Rance Protocol Test", () => {
       "MUSD"
     );
 
-    const receipt = await tx.wait();
-    expect(receipt.events[8].args[1]).to.equal(await admin.getAddress());
+    const tx = await protocol.getAllUserPackages(admin.getAddress());
+    const postBalance = await paymentToken.balanceOf(treasury.address);
+    const insureAmount = await protocol.getInsureAmount(tx[1].planId, amount);
+    const insuranceFee = amount.sub(insureAmount);
+    expect(postBalance).to.be.equal(treasuryBalance.add(insuranceFee));
   });
 
   it("Should only purchase valid package plan", async () => {
@@ -372,13 +376,21 @@ describe("Rance Protocol Test", () => {
   it("Should cancel package plan", async () => {
     let tx = await protocol.getAllUserPackages(admin.getAddress());
     await rance.approve(protocol.address, ethers.utils.parseUnits("900000"));
+    const treasuryBalance1 = await paymentToken.balanceOf(treasury.address);
+    const treasuryBalance2 = await rance.balanceOf(treasury.address);
 
     await protocol.cancel(tx[0].packageId);
-
     tx = await protocol.getAllUserPackages(admin.getAddress());
-    const ranceBalance = await rance.balanceOf(treasury.address);
+    const postBalance2 = await rance.balanceOf(treasury.address);
+    const postBalance1 = await paymentToken.balanceOf(treasury.address);
+    const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
+    const insuranceFee = amount.sub(insureAmount);
     expect(tx[0].isCancelled).to.be.true;
-    expect(ranceBalance).to.be.equal(ethers.utils.parseUnits("10"));
+    expect(tx[0].isWithdrawn).to.be.true;
+    expect(postBalance1).to.be.equal(treasuryBalance1.sub(insuranceFee));
+    expect(postBalance2).to.be.equal(
+      treasuryBalance2.add(ethers.utils.parseUnits("10"))
+    );
   });
 
   it("Should only cancel active package plan", async () => {
@@ -402,9 +414,14 @@ describe("Rance Protocol Test", () => {
     await ethers.provider.send("evm_mine", []);
 
     let tx = await protocol.getAllUserPackages(admin.getAddress());
+    const treasuryBalance = await paymentToken.balanceOf(treasury.address);
     await protocol.withdraw(tx[0].packageId);
     tx = await protocol.getAllUserPackages(admin.getAddress());
+    const postBalance = await paymentToken.balanceOf(treasury.address);
+    const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
+    const insuranceFee = amount.sub(insureAmount);
     expect(tx[0].isWithdrawn).to.be.true;
+    expect(postBalance).to.be.equal(treasuryBalance.sub(insuranceFee));
   });
 
   it("Should only withdraw package plan that does not elapsed 30days after expiration", async () => {

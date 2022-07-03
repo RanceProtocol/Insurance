@@ -166,10 +166,10 @@ describe("Rance Protocol Test", () => {
     });
 
     it("Should add a payment Token", async () => {
-      const tx = await protocol.addPaymentToken("BUSD", paymentToken2.address);
-      const receipt = await tx.wait();
-      const actualAddress = receipt.events[1].args[1];
-      expect(actualAddress).to.equal(paymentToken2.address);
+      await protocol.addPaymentToken("BUSD", paymentToken2.address);
+      const tx = await protocol.getPaymentTokens();
+      const actualAddress = tx[1];
+      expect(actualAddress).to.equal("BUSD");
     });
 
     it("Should only add a payment Token that is not added", async () => {
@@ -199,10 +199,10 @@ describe("Rance Protocol Test", () => {
     });
 
     it("Should add an InsureCoin", async () => {
-      const tx = await protocol.addInsureCoins(["WETH"], [insureCoin2.address]);
-      const receipt = await tx.wait();
-      const actualAddress = receipt.events[0].args[1];
-      expect(actualAddress).to.equal(insureCoin2.address);
+      await protocol.addInsureCoins(["WETH"], [insureCoin2.address]);
+      const tx = await protocol.getInsureCoins();
+      const actualAddress = tx[1];
+      expect(actualAddress).to.equal("WETH");
     });
 
     it("Should only add an InsureCoin that is not added", async () => {
@@ -269,19 +269,15 @@ describe("Rance Protocol Test", () => {
       const insuranceFee = 5;
       const uninsureFee = ethers.utils.parseUnits("1000");
 
-      const tx = await protocol.addPackagePlan(
-        periodInSeconds,
-        insuranceFee,
-        uninsureFee
-      );
+      await protocol.addPackagePlan(periodInSeconds, insuranceFee, uninsureFee);
 
-      const receipt = await tx.wait();
+      const tx = await protocol.getAllPackagePlans();
 
       const expectedPlanId = ethers.utils.solidityKeccak256(
         ["uint32", "uint8", "uint"],
         [periodInSeconds, insuranceFee, uninsureFee]
       );
-      expect(receipt.events[0].args[0]).to.be.equal(expectedPlanId);
+      expect(tx[3].planId).to.be.equal(expectedPlanId);
     });
 
     it("Should only allow admin add a new package plan", async () => {

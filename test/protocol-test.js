@@ -314,6 +314,13 @@ describe("Rance Protocol Test", () => {
     const postBalance = await paymentToken.balanceOf(treasury.address);
     const insureAmount = await protocol.getInsureAmount(tx[1].planId, amount);
     const insuranceFee = amount.sub(insureAmount);
+    expect(tx[1].user).to.be.equal(await admin.getAddress());
+    expect(tx[1].planId).to.be.equal(planId2);
+    expect(tx[1].initialDeposit).to.be.equal(insureAmount);
+    expect(tx[1].isCancelled).to.be.false;
+    expect(tx[1].isWithdrawn).to.be.false;
+    expect(tx[1].insureCoin).to.equal(insureCoin.address);
+    expect(tx[1].paymentToken).to.equal(paymentToken.address);
     expect(postBalance).to.be.equal(treasuryBalance.add(insuranceFee));
   });
 
@@ -385,8 +392,13 @@ describe("Rance Protocol Test", () => {
     const postBalance1 = await paymentToken.balanceOf(treasury.address);
     const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
     const insuranceFee = amount.sub(insureAmount);
+    expect(tx[0].user).to.be.equal(await admin.getAddress());
+    expect(tx[0].planId).to.be.equal(planId1);
+    expect(tx[0].initialDeposit).to.be.equal(insureAmount);
     expect(tx[0].isCancelled).to.be.true;
     expect(tx[0].isWithdrawn).to.be.true;
+    expect(tx[0].paymentToken).to.be.equal(paymentToken.address);
+    expect(tx[0].insureCoin).to.be.equal(insureCoin.address);
     expect(postBalance1).to.be.equal(treasuryBalance1.sub(insuranceFee));
     expect(postBalance2).to.be.equal(
       treasuryBalance2.add(ethers.utils.parseUnits("10"))
@@ -420,7 +432,14 @@ describe("Rance Protocol Test", () => {
     const postBalance = await paymentToken.balanceOf(treasury.address);
     const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
     const insuranceFee = amount.sub(insureAmount);
+
+    expect(tx[0].user).to.be.equal(await admin.getAddress());
+    expect(tx[0].planId).to.be.equal(planId1);
+    expect(tx[0].initialDeposit).to.be.equal(insureAmount);
+    expect(tx[0].isCancelled).to.be.false;
     expect(tx[0].isWithdrawn).to.be.true;
+    expect(tx[0].paymentToken).to.be.equal(paymentToken.address);
+    expect(tx[0].insureCoin).to.be.equal(insureCoin.address);
     expect(postBalance).to.be.equal(treasuryBalance.sub(insuranceFee));
   });
 

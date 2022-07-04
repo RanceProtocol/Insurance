@@ -33,10 +33,8 @@ describe("Rance Treasury Contract Test", () => {
   });
 
   it("Should set protocol address", async () => {
-    const tx = await treasury.setInsuranceProtocolAddress(protocol.address);
-    const receipt = await tx.wait();
-    const actualAddress = receipt.events[0].args[1];
-    expect(actualAddress).to.equal(protocol.address);
+    await treasury.setInsuranceProtocolAddress(protocol.address);
+    expect(await treasury.protocol()).to.equal(protocol.address);
   });
 
   it("Should only allow admin set protocol address", async () => {
@@ -47,13 +45,10 @@ describe("Rance Treasury Contract Test", () => {
   it("Should withdraw BNB/CRO from treasury contract", async () => {
     const amount = ethers.utils.parseUnits("50");
     await deployer.sendTransaction({ to: treasury.address, value: amount });
-
-    const tx = await treasury.withdraw(amount);
-    const contractBalance = await provider.getBalance(treasury.address);
-    const receipt = await tx.wait();
-    expect(contractBalance).to.equal(ethers.BigNumber.from(0));
-    expect(receipt.events[0].args[0]).to.equal(await deployer.getAddress());
-    expect(receipt.events[0].args[1]).to.equal(amount);
+    const treasuryBalance = await provider.getBalance(treasury.address);
+    await treasury.withdraw(amount);
+    const PostTreasuryBalance = await provider.getBalance(treasury.address);
+    expect(PostTreasuryBalance).to.be.equal(treasuryBalance.sub(amount));
   });
 
   it("Should only allow admin withdraw BNB/CRO from treasury contract", async () => {
@@ -68,16 +63,16 @@ describe("Rance Treasury Contract Test", () => {
     await paymentToken.transfer(treasury.address, amount);
 
     await paymentToken.approve(user.getAddress(), amount);
-    const tx = await treasury.withdrawToken(
+    const treasuryBalance = await paymentToken.balanceOf(treasury.address);
+    await treasury.withdrawToken(
       paymentToken.address,
       user.getAddress(),
       amount
     );
     const userBalance = await paymentToken.balanceOf(user.getAddress());
-    const receipt = await tx.wait();
+    const PostTreasuryBalance = await paymentToken.balanceOf(treasury.address);
+    expect(PostTreasuryBalance).to.be.equal(treasuryBalance.sub(amount));
     expect(userBalance).to.equal(amount);
-    expect(receipt.events[1].args[0]).to.equal(await user.getAddress());
-    expect(receipt.events[1].args[1]).to.equal(amount);
   });
 
   it("Should allow only authorised account withdraw token from treasury contract", async () => {

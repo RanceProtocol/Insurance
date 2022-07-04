@@ -438,7 +438,6 @@ describe("Rance Protocol Test", () => {
       tx = await protocol.getAllUserPackages(admin.getAddress());
       const postBalance = await paymentToken.balanceOf(treasury.address);
       const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
-      const insuranceFee = amount.sub(insureAmount);
 
       expect(tx[0].user).to.be.equal(await admin.getAddress());
       expect(tx[0].planId).to.be.equal(planId1);
@@ -447,7 +446,9 @@ describe("Rance Protocol Test", () => {
       expect(tx[0].isWithdrawn).to.be.true;
       expect(tx[0].paymentToken).to.be.equal(paymentToken.address);
       expect(tx[0].insureCoin).to.be.equal(insureCoin.address);
-      expect(postBalance).to.be.equal(treasuryBalance.sub(insuranceFee));
+      expect(postBalance).to.be.equal(
+        treasuryBalance.sub(tx[0].initialDeposit)
+      );
     });
 
     it("Should only withdraw package plan that does not elapsed 30days after expiration", async () => {

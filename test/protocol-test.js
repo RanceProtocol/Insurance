@@ -167,7 +167,10 @@ describe("Rance Protocol Test", () => {
 
     it("Should add a payment Token", async () => {
       await protocol.addPaymentToken("BUSD", paymentToken2.address);
-      const tx = await protocol.getPaymentTokens();
+      const tx = await protocol.getPaymentTokens(
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("2")
+      );
       const actualAddress = tx[1];
       expect(actualAddress).to.equal("BUSD");
     });
@@ -200,7 +203,10 @@ describe("Rance Protocol Test", () => {
 
     it("Should add an InsureCoin", async () => {
       await protocol.addInsureCoins(["WETH"], [insureCoin2.address]);
-      const tx = await protocol.getInsureCoins();
+      const tx = await protocol.getInsureCoins(
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("2")
+      );
       const actualAddress = tx[1];
       expect(actualAddress).to.equal("WETH");
     });
@@ -231,7 +237,10 @@ describe("Rance Protocol Test", () => {
     });
 
     it("Should returns all package plans", async () => {
-      const tx = await protocol.getAllPackagePlans();
+      const tx = await protocol.getAllPackagePlans(
+        ethers.BigNumber.from("0"),
+        await protocol.getPackagePlansLength()
+      );
       for (let i = 0; i < tx.length; i++) {
         const planId = ethers.utils.solidityKeccak256(
           ["uint32", "uint8", "uint72"],
@@ -247,7 +256,10 @@ describe("Rance Protocol Test", () => {
 
     it("Should deactivate package plan", async () => {
       await protocol.deactivatePackagePlan(planId1);
-      const tx = await protocol.getAllPackagePlans();
+      const tx = await protocol.getAllPackagePlans(
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       expect(tx[0].isActivated).to.be.false;
     });
 
@@ -271,7 +283,10 @@ describe("Rance Protocol Test", () => {
 
       await protocol.addPackagePlan(periodInSeconds, insuranceFee, uninsureFee);
 
-      const tx = await protocol.getAllPackagePlans();
+      const tx = await protocol.getAllPackagePlans(
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("4")
+      );
 
       const expectedPlanId = ethers.utils.solidityKeccak256(
         ["uint32", "uint8", "uint"],
@@ -302,7 +317,11 @@ describe("Rance Protocol Test", () => {
 
     it("Should return user packages", async () => {
       const insureAmount = await protocol.getInsureAmount(planId1, amount);
-      const tx = await protocol.getAllUserPackages(admin.getAddress());
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       expect(tx[0].user).to.equal(await admin.getAddress());
       expect(tx[0].initialDeposit).to.equal(insureAmount);
       expect(tx[0].isCancelled).to.be.false;
@@ -325,7 +344,11 @@ describe("Rance Protocol Test", () => {
         "MUSD"
       );
 
-      const tx = await protocol.getAllUserPackages(admin.getAddress());
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("2")
+      );
       const postBalance = await paymentToken.balanceOf(treasury.address);
       const insureAmount = await protocol.getInsureAmount(tx[1].planId, amount);
       const insuranceFee = amount.sub(insureAmount);
@@ -386,13 +409,21 @@ describe("Rance Protocol Test", () => {
 
   describe("Cancel() Test", () => {
     it("Should cancel package plan", async () => {
-      let tx = await protocol.getAllUserPackages(admin.getAddress());
+      let tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       await rance.approve(protocol.address, ethers.utils.parseUnits("900000"));
       const treasuryBalance1 = await paymentToken.balanceOf(treasury.address);
       const treasuryBalance2 = await rance.balanceOf(treasury.address);
 
       await protocol.cancel(tx[0].packageId);
-      tx = await protocol.getAllUserPackages(admin.getAddress());
+      tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       const postBalance2 = await rance.balanceOf(treasury.address);
       const postBalance1 = await paymentToken.balanceOf(treasury.address);
       const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
@@ -414,7 +445,11 @@ describe("Rance Protocol Test", () => {
       await ethers.provider.send("evm_increaseTime", [elapsedTime]);
       await ethers.provider.send("evm_mine", []);
 
-      const tx = await protocol.getAllUserPackages(admin.getAddress());
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       await rance.approve(protocol.address, ethers.utils.parseUnits("900000"));
 
       expect(protocol.cancel(tx[0].packageId)).to.be.reverted;
@@ -423,7 +458,11 @@ describe("Rance Protocol Test", () => {
 
   describe("Withdraw() Test", () => {
     it("Should only withdraw package plan when expired", async () => {
-      const tx = await protocol.getAllUserPackages(admin.getAddress());
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
     });
 
@@ -432,10 +471,18 @@ describe("Rance Protocol Test", () => {
       await ethers.provider.send("evm_increaseTime", [elapsedTime]);
       await ethers.provider.send("evm_mine", []);
 
-      let tx = await protocol.getAllUserPackages(admin.getAddress());
+      let tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       const treasuryBalance = await paymentToken.balanceOf(treasury.address);
       await protocol.withdraw(tx[0].packageId);
-      tx = await protocol.getAllUserPackages(admin.getAddress());
+      tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       const postBalance = await paymentToken.balanceOf(treasury.address);
       const insureAmount = await protocol.getInsureAmount(tx[0].planId, amount);
 
@@ -455,7 +502,11 @@ describe("Rance Protocol Test", () => {
       await ethers.provider.send("evm_increaseTime", [elapsedTime]);
       await ethers.provider.send("evm_mine", []);
 
-      const tx = await protocol.getAllUserPackages(admin.getAddress());
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
       expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
     });
   });

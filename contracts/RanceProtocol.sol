@@ -277,14 +277,26 @@ contract RanceProtocol is
         return totalInsuranceLocked[_token];
     }
 
+    function getPaymentTokensLength() external view returns (uint){
+        return paymentTokens.length;
+    }
+
     /**
      * @notice get the array of payment tokens
      * @return paymentTokens the array of payment token
      */
-    function getPaymentTokens()
+    function getPaymentTokens(uint cursor, uint length)
         external view returns(string[] memory)
     {
-        return paymentTokens;
+        string[] memory output = new string[](length);
+        for (uint n = cursor;  n < length;  n = n + 1) {
+            output[n] = paymentTokens[n];
+        }
+        return output;
+    }
+
+    function getInsureCoinsLength() external view returns (uint){
+        return insureCoins.length;
     }
 
 
@@ -292,10 +304,15 @@ contract RanceProtocol is
      * @notice get the array of  insure coins
      * @return insureCoins the array of insure coins
      */
-    function getInsureCoins()
+    function getInsureCoins(uint cursor, uint length)
         external view returns(string[] memory)
     {
-        return insureCoins;
+        string[] memory output = new string[](length);
+        for (uint n = cursor;  n < length;  n = n + 1) {
+            output[n] = insureCoins[n];
+        }
+
+        return output;
     }
 
    
@@ -427,18 +444,19 @@ contract RanceProtocol is
         }
     }
 
+    function getPackagePlansLength() external view returns (uint){
+        return packagePlanIds.length;
+    }
+
 
     /**
      * @notice get all package plans
      * @return packagePlans return array of package plans
      */
-    function getAllPackagePlans() external view returns(PackagePlan[] memory){
-        uint length = packagePlanIds.length;
+    function getAllPackagePlans(uint cursor, uint length) external view returns(PackagePlan[] memory){
         PackagePlan[] memory output = new PackagePlan[](length);
-        uint index = 0;
-        for (uint i = 0; i < length; i = i + 1) {
-            output[index] = planIdToPackagePlan[packagePlanIds[i]];
-            index = index + 1;
+        for (uint n = cursor;  n < length;  n = n + 1) {
+            output[n] = planIdToPackagePlan[packagePlanIds[n]];
         }
         return output;
     }
@@ -508,15 +526,18 @@ contract RanceProtocol is
         );
     }
 
+    function getUserPackagesLength(address _user) external view returns (uint){
+        return userToPackageIds[_user].length;
+    }
+
     /**
      * @notice get all user packages
      * @return Package return array of user packages
      */
-    function getAllUserPackages(address _user) external view returns(Package[] memory) {
-        uint length = userToPackageIds[_user].length;
+    function getAllUserPackages(address _user, uint cursor, uint length) external view returns(Package[] memory) {
         Package[] memory output = new Package[](length);
-        for(uint i = 0; i < length; i = i + 1){
-            output[i] = packageIdToPackage[userToPackageIds[_user][i]];
+        for (uint n = cursor;  n < length;  n = n + 1) {
+            output[n] = packageIdToPackage[userToPackageIds[_user][n]];
         }
         
         return output;

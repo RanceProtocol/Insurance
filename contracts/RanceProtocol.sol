@@ -199,6 +199,11 @@ contract RanceProtocol is
     event TreasuryAddressSet(address indexed _address);
 
     /**
+     * @dev Emitted when the rance address is set
+     */
+    event RanceAddressSet(address indexed _address);
+
+    /**
      * @dev check that the address passed is not 0. 
      */
     modifier notAddress0(address _address) {
@@ -211,22 +216,20 @@ contract RanceProtocol is
      * @notice Contract constructor
      * @param _treasuryAddress treasury contract address
      * @param _uniswapRouter mmfinance router address
-     * @param _rance RANCE token address
+     * @param _paymentToken BUSD token address
      */
     function initialize(
         address _treasuryAddress,
          address _uniswapRouter,
-         address _rance,
          address _paymentToken)
         public initializer { 
         __Ownable_init();
         treasury = IRanceTreasury(_treasuryAddress);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-        RANCE = IERC20Upgradeable(_rance);
-        paymentTokenNameToAddress["MUSD"] = _paymentToken;
+        paymentTokenNameToAddress["BUSD"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
-        paymentTokens.push("MUSD");
+        paymentTokens.push("BUSD");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint72[3] memory uninsureFees = [10 ether, 100 ether, 1000 ether];
@@ -264,6 +267,18 @@ contract RanceProtocol is
     {
         treasury = IRanceTreasury(_treasuryAddress);
         emit TreasuryAddressSet(_treasuryAddress);
+    }
+
+    /**
+     * @notice sets the address of the rance token
+     * @param _token the rance token address 
+     */
+    function setRance(address _token)
+        external 
+        onlyOwner notAddress0(_token)
+    {
+        RANCE = IERC20Upgradeable(_token);
+        emit RanceAddressSet(_token);
     }
 
     /**

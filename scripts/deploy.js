@@ -1,35 +1,58 @@
 const { ethers, upgrades } = require("hardhat");
-let admin;
+const treasure = require("../artifacts/contracts/RanceTreasury.sol/RanceTreasury.json");
+const pro = require("../artifacts/contracts/RanceProtocol.sol/RanceProtocol.json");
+const addr = "0x2c1cA1839893B21d9eAd72c0bc1d1e05841bfD82";
+const addr2 = "0xaca2d837a52e141e9a6cebe33f685cc90f311356";
+
 async function main() {
-  [admin] = await ethers.getSigners();
-  const RanceTreasury = await ethers.getContractFactory("RanceTreasury");
-  const RanceProtocol = await ethers.getContractFactory("RanceProtocol");
-  const treasury = await RanceTreasury.deploy(admin.getAddress());
-  const protocol = await upgrades.deployProxy(
-    RanceProtocol,
-    [
-      treasury.address,
-      process.env.UNISWAP_ROUTER,
-      process.env.RANCE_TOKEN,
-      process.env.MUSD,
-    ],
-    { kind: "uups" }
-  );
+  const [admin] = await ethers.getSigners();
+  const treasury = new ethers.Contract(addr, treasure.abi, admin);
+  const protocol = new ethers.Contract(addr2, pro.abi, admin);
 
   await treasury.setInsuranceProtocolAddress(protocol.address);
-  await protocol.setTreasuryAddress(treasury.address);
+  await protocol.addPaymentToken("USDT", process.env.USDT);
   await protocol.addInsureCoins(
-    ["BTC", "ETH", "CRO", "MMF"],
-    [process.env.BTC, process.env.ETH, process.env.CRO, process.env.MMF]
+    [
+      "BTCB",
+      "ETH",
+      "WBNB",
+      "ADA",
+      "XRP",
+      "DOGE",
+      "LTC",
+      "DOT",
+      "LINK",
+      "CAKE",
+      "TRX",
+      "UNI",
+      "SUSHI",
+      "AXS",
+      "TWT",
+      "PRED",
+    ],
+    [
+      process.env.BTCB,
+      process.env.ETH,
+      process.env.WBNB,
+      process.env.ADA,
+      process.env.XRP,
+      process.env.DOGE,
+      process.env.LTC,
+      process.env.DOT,
+      process.env.LINK,
+      process.env.CAKE,
+      process.env.TRX,
+      process.env.UNI,
+      process.env.SUSHI,
+      process.env.AXS,
+      process.env.TWT,
+      process.env.PRED,
+    ]
   );
   await protocol.transferOwnership(process.env.ADMIN_ADDRESS);
   await treasury.addAdmin(process.env.ADMIN_ADDRESS);
-
-  console.log(`
-    RanceProtocol deployed to: ${protocol.address},
-    RanceTreasurt deployed to: ${treasury.address}`);
 }
-module.exports = [admin.getAddress()];
+// module.exports = [admin.getAddress()];
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

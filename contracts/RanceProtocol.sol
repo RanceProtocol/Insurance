@@ -226,13 +226,13 @@ contract RanceProtocol is
         __Ownable_init();
         treasury = IRanceTreasury(_treasuryAddress);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-        paymentTokenNameToAddress["BUSD"] = _paymentToken;
+        paymentTokenNameToAddress["USDC"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
-        paymentTokens.push("BUSD");
+        paymentTokens.push("USDC");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
-        uint72[3] memory uninsureFees = [10 ether, 100 ether, 1000 ether];
+        uint80[3] memory uninsureFees = [1000 ether, 2000 ether, 5000 ether];
         bytes32[3] memory ids = [
             keccak256(abi.encodePacked(periodInSeconds[0],insuranceFees[0],uninsureFees[0])),
             keccak256(abi.encodePacked(periodInSeconds[1],insuranceFees[1],uninsureFees[1])),
@@ -415,7 +415,8 @@ contract RanceProtocol is
         paymentTokenAdded[_token] = false;
         for (uint i = 0; i < paymentTokens.length; i = i + 1) {
             if(keccak256(abi.encodePacked(paymentTokens[i])) == keccak256(abi.encodePacked(_tokenName))){
-                delete paymentTokens[i];
+                paymentTokens[i] = paymentTokens[paymentTokens.length -1];
+                paymentTokens.pop();
             }
         }
         IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
@@ -452,7 +453,8 @@ contract RanceProtocol is
             require(insureCoinAdded[_token], "Rance Protocol:insureCoin does not exist");
             insureCoinAdded[_token] = false;
             if(keccak256(abi.encodePacked(insureCoins[i])) == keccak256(abi.encodePacked(_tokenNames[i]))){
-                delete insureCoins[i];
+                insureCoins[i] = insureCoins[insureCoins.length -1];
+                insureCoins.pop();
             }
 
             emit InsureCoinRemoved(_token);

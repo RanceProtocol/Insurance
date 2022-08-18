@@ -74,6 +74,16 @@ module.exports = {
         count: 10,
       },
     },
+    polygon: {
+      url: "https://rpc-mainnet.maticvigil.com",
+      chainId: 137,
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
+    },
     hardhat: {
       accounts: {
         mnemonic,

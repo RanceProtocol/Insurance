@@ -53,6 +53,13 @@ contract RanceProtocol is
     string[] public insureCoins;
 
 
+    /** 
+    * @dev referral percentage
+    */
+
+    uint public referralPercentage;
+
+
     /**
      * @dev data of Package Plan on the Insurance Protocol
      */
@@ -63,6 +70,21 @@ contract RanceProtocol is
         uint uninsureFee;
         bool isActivated; 
     }
+
+
+    /**
+     * @dev data of Referral on the Insurance Protocol
+     */
+
+     struct Referral{
+        bytes32 referralId;
+        uint reward;
+        uint timestamp;
+        address token;
+        address referrer;
+        address user;
+        bool claimed;
+     }
 
 
     /**
@@ -126,6 +148,20 @@ contract RanceProtocol is
      * @dev check if insure Coin is added
      */
     mapping(address => bool) public insureCoinAdded;
+
+
+
+
+    /**
+     * @dev list of all referral ids referred per user
+     */
+    mapping(address => bytes32[]) public userToReferralIds; 
+
+
+    /**
+     * @dev retrieve Referral with referral id
+     */
+     mapping(bytes32 => Referral) public referrals;
 
 
     /**
@@ -204,6 +240,27 @@ contract RanceProtocol is
     event RanceAddressSet(address indexed _address);
 
     /**
+     * @dev Emitted when a user refer someone
+     */
+    event Reffered(
+        address indexed referrer, 
+        address indexed user, 
+        uint amount, 
+        uint timestamp
+    );
+
+
+    /**
+     * @dev Emitted when a user claim refferal rewards
+     */
+    event RewardClaimed(address indexed user, bytes32 indexed referralId, uint amount);
+
+    /**
+     * @dev Emitted when the referral percentage is set
+     */
+    event ReferralPercentageUpdated(uint newPercentage);
+
+    /**
      * @dev check that the address passed is not 0. 
      */
     modifier notAddress0(address _address) {
@@ -229,6 +286,7 @@ contract RanceProtocol is
         paymentTokenNameToAddress["USDC"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
+        referralPercentage = 10;
         paymentTokens.push("USDC");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
@@ -280,6 +338,20 @@ contract RanceProtocol is
         RANCE = IERC20Upgradeable(_token);
         emit RanceAddressSet(_token);
     }
+
+
+    /**
+     * @notice update the percentage of the referral fee
+     * @param _percentage of the updated referral fee 
+     */
+    function updateReferralPercentage(uint _percentage)
+        external onlyOwner
+    {
+        require(_percentage != 0, "Rance Protocol: percentage cannot be 0");
+        referralPercentage = _percentage;
+        emit ReferralPercentageUpdated(_percentage);
+    }
+
 
     /**
      * @notice get the totalinsurancelocked of a payment token
@@ -490,6 +562,7 @@ contract RanceProtocol is
     (
         bytes32 _planId,
         uint _amount,
+        address _referrer,
         address[] memory path,
         string memory _insureCoin,
         string memory _paymentToken
@@ -501,6 +574,33 @@ contract RanceProtocol is
         uint insuranceFee = _amount.sub(insureAmount);
         address paymentToken = paymentTokenNameToAddress[_paymentToken];
         address insureCoin = insureCoinNameToAddress[_insureCoin];
+        uint referralReward = (insuranceFee.mul(referralPercentage)).div(100);
+
+        if(_referrer != address(0)){
+            bytes32 _referralId = keccak256(abi.encodePacked(
+                msg.sender,
+                _referrer,
+                _paymentToken,
+                block.timestamp
+            ));
+
+            require(referrals[_referralId].referralId != _referralId, "Rance Protocol: Referral exist");
+
+            Referral memory referral = Referral({
+                referralId: _referralId,
+                reward: referralReward,
+                timestamp: block.timestamp,
+                token: paymentToken,
+                referrer: _referrer,
+                user: msg.sender,
+                claimed: false
+            });
+
+            referrals[_referralId] = referral;
+            userToReferralIds[msg.sender].push(_referralId);
+            
+            emit Reffered(_referrer, msg.sender, referralReward, block.timestamp);
+        }
 
         totalInsuranceLocked[paymentToken] += insureAmount;
         uint startTimestamp = block.timestamp;
@@ -547,6 +647,12 @@ contract RanceProtocol is
         return userToPackageIds[_user].length;
     }
 
+
+    function getUserReferralsLength(address _user) external view returns (uint){
+        return userToReferralIds[_user].length;
+    }
+
+
     /**
      * @notice get all user packages
      * @return Package return array of user packages
@@ -555,6 +661,20 @@ contract RanceProtocol is
         Package[] memory output = new Package[](length);
         for (uint n = cursor;  n < length;  n = n + 1) {
             output[n] = packageIdToPackage[userToPackageIds[_user][n]];
+        }
+        
+        return output;
+    }
+
+
+    /**
+     * @notice get all user referrals
+     * @return Package return array of user referrals
+     */
+    function getAllUserReferrals(address _user, uint cursor, uint length) external view returns(Referral[] memory) {
+        Referral[] memory output = new Referral[](length);
+        for (uint n = cursor;  n < length;  n = n + 1) {
+            output[n] = referrals[userToReferralIds[_user][n]];
         }
         
         return output;
@@ -633,6 +753,31 @@ contract RanceProtocol is
             _packageId, 
            msg.sender
         );
+    } 
+
+
+    /**
+     * @notice claim referral reward
+     * @param _referralIds ids of referrals to claim
+     */
+    function claim(bytes32[] memory _referralIds) external nonReentrant{
+
+        for(uint i; i < _referralIds.length; i++){
+            require(referrals[_referralIds[i]].referralId == _referralIds[i], "Rance Protocol: Package does not exist");
+
+            Referral storage referral = referrals[_referralIds[i]];
+            require(!referral.claimed, "Rance Protocol: Referral reward Not Claimable");
+
+            referral.claimed = true;
+
+            treasury.withdrawToken(
+                referral.token, 
+                msg.sender, 
+                referral.reward
+            );     
+
+            emit RewardClaimed(msg.sender, _referralIds[i], referral.reward);
+        }
     } 
 
     /**

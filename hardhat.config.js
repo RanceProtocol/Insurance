@@ -22,7 +22,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
-const mnemonic = process.env.MNEMONIC;
+const mnemonic = process.env.MNEMONIC || "";
 module.exports = {
   solidity: {
     version: "0.8.4",
@@ -98,7 +98,7 @@ module.exports = {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
   },
   mocha: {
     timeout: 40000,

@@ -59,7 +59,7 @@ describe("Rance Protocol Test", () => {
     router = await Router.deploy(factory.address, weth.address);
     protocol = await upgrades.deployProxy(
       RanceProtocol,
-      [treasury.address, router.address, rance.address, paymentToken.address],
+      [treasury.address, router.address, paymentToken.address],
       { kind: "uups" }
     );
 
@@ -106,28 +106,30 @@ describe("Rance Protocol Test", () => {
     periodInSeconds = [15780000, 31560000, 63120000];
     insuranceFees = [100, 50, 25];
     uninsureFees = [
-      ethers.utils.parseUnits("10"),
-      ethers.utils.parseUnits("100"),
       ethers.utils.parseUnits("1000"),
+      ethers.utils.parseUnits("2000"),
+      ethers.utils.parseUnits("5000"),
     ];
 
     planId1 = ethers.utils.solidityKeccak256(
-      ["uint32", "uint8", "uint72"],
+      ["uint32", "uint8", "uint80"],
       [periodInSeconds[0], insuranceFees[0], uninsureFees[0]]
     );
 
     planId2 = ethers.utils.solidityKeccak256(
-      ["uint32", "uint8", "uint72"],
+      ["uint32", "uint8", "uint80"],
       [periodInSeconds[1], insuranceFees[1], uninsureFees[1]]
     );
 
     planId3 = ethers.utils.solidityKeccak256(
-      ["uint32", "uint8", "uint72"],
+      ["uint32", "uint8", "uint80"],
       [periodInSeconds[2], insuranceFees[2], uninsureFees[2]]
     );
 
     amount = ethers.utils.parseUnits("200");
 
+    await protocol.setRance(rance.address);
+    await protocol.updateReferralReward(ethers.BigNumber.from("5"));
     await protocol.addInsureCoins(["WBTC"], [insureCoin.address]);
     await protocol.insure(
       planId1,
@@ -243,7 +245,7 @@ describe("Rance Protocol Test", () => {
       );
       for (let i = 0; i < tx.length; i++) {
         const planId = ethers.utils.solidityKeccak256(
-          ["uint32", "uint8", "uint72"],
+          ["uint32", "uint8", "uint80"],
           [periodInSeconds[i], insuranceFees[i], uninsureFees[i]]
         );
         expect(tx[i].planId).to.equal(planId);
@@ -362,6 +364,50 @@ describe("Rance Protocol Test", () => {
       expect(postBalance).to.be.equal(treasuryBalance.add(insuranceFee));
     });
 
+    it("Should purchase a package plan with referrer", async () => {
+      const amount = ethers.utils.parseUnits("200");
+      const treasuryBalance = await paymentToken.balanceOf(treasury.address);
+      await protocol.insureWithReferrer(
+        planId2,
+        amount,
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD",
+        user.getAddress()
+      );
+
+      const tx = await protocol.getAllUserPackages(
+        admin.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("2")
+      );
+
+      const tx1 = await protocol.getAllUserReferrals(
+        user.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
+
+      const postBalance = await paymentToken.balanceOf(treasury.address);
+      const insureAmount = await protocol.getInsureAmount(tx[1].planId, amount);
+      const insuranceFee = amount.sub(insureAmount);
+      const reward = insuranceFee
+        .mul(await protocol.referralPercentage())
+        .div(100);
+      expect(tx[1].user).to.be.equal(await admin.getAddress());
+      expect(tx[1].planId).to.be.equal(planId2);
+      expect(tx[1].initialDeposit).to.be.equal(insureAmount);
+      expect(tx[1].isCancelled).to.be.false;
+      expect(tx[1].isWithdrawn).to.be.false;
+      expect(tx[1].insureCoin).to.equal(insureCoin.address);
+      expect(tx[1].paymentToken).to.equal(paymentToken.address);
+      expect(postBalance).to.be.equal(treasuryBalance.add(insuranceFee));
+      expect(tx1[0].reward).to.equal(ethers.BigNumber.from(reward));
+      expect(tx1[0].token).to.equal(paymentToken.address);
+      expect(tx1[0].referrer).to.equal(await user.getAddress());
+      expect(tx1[0].claimed).to.be.false;
+    });
+
     it("Should only purchase valid package plan", async () => {
       const amount = ethers.utils.parseUnits("200");
       const nonExistentPlanId = ethers.utils.solidityKeccak256(
@@ -437,7 +483,7 @@ describe("Rance Protocol Test", () => {
       expect(tx[0].insureCoin).to.be.equal(insureCoin.address);
       expect(postBalance1).to.be.equal(treasuryBalance1.sub(insuranceFee));
       expect(postBalance2).to.be.equal(
-        treasuryBalance2.add(ethers.utils.parseUnits("10"))
+        treasuryBalance2.add(ethers.utils.parseUnits("1000"))
       );
     });
 
@@ -508,6 +554,78 @@ describe("Rance Protocol Test", () => {
         ethers.BigNumber.from("1")
       );
       expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
+    });
+  });
+  describe("Claim() Test", () => {
+    it("Should allow only reward owner to claim reward for a referral", async () => {
+      const amount = ethers.utils.parseUnits("200");
+      await protocol.insureWithReferrer(
+        planId2,
+        amount,
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD",
+        user.getAddress()
+      );
+      const tx = await protocol.getAllUserReferrals(
+        user.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
+      expect(protocol.claim([tx[0].referralId])).to.be.reverted;
+    });
+
+    it("Should claim reward for a referral", async () => {
+      const amount = ethers.utils.parseUnits("200");
+      await protocol.insureWithReferrer(
+        planId2,
+        amount,
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD",
+        user.getAddress()
+      );
+      let tx = await protocol.getAllUserReferrals(
+        user.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
+      const treasuryBalance = await paymentToken.balanceOf(treasury.address);
+      await protocol.connect(user).claim([tx[0].referralId]);
+      tx = await protocol.getAllUserReferrals(
+        user.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
+      const postBalance = await paymentToken.balanceOf(treasury.address);
+
+      expect(tx[0].reward).to.equal(
+        await paymentToken.balanceOf(user.getAddress())
+      );
+      expect(tx[0].token).to.equal(paymentToken.address);
+      expect(tx[0].referrer).to.equal(await user.getAddress());
+      expect(tx[0].claimed).to.be.true;
+      expect(postBalance).to.be.equal(treasuryBalance.sub(tx[0].reward));
+    });
+
+    it("Should allow only reward owner that does'nt claim reward to claim for a referral", async () => {
+      const amount = ethers.utils.parseUnits("200");
+      await protocol.insureWithReferrer(
+        planId2,
+        amount,
+        [paymentToken.address, insureCoin.address],
+        "WBTC",
+        "MUSD",
+        user.getAddress()
+      );
+      const tx = await protocol.getAllUserReferrals(
+        user.getAddress(),
+        ethers.BigNumber.from("0"),
+        ethers.BigNumber.from("1")
+      );
+      await protocol.connect(user).claim([tx[0].referralId]);
+
+      expect(protocol.connect(user).claim([tx[0].referralId])).to.be.reverted;
     });
   });
 });

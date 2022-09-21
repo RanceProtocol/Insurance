@@ -1,8 +1,18 @@
 const { ethers, waffle, upgrades } = require("hardhat");
 const { expect } = require("chai");
+const uniswapFactory = require("@uniswap/v2-core/build/UniswapV2Factory.json");
+const uniswapRouter = require("@uniswap/v2-periphery/build/UniswapV2Router02.json");
+const WETH9 = require("@uniswap/v2-periphery/build/WETH9.json");
 
 describe("Rance Treasury Contract Test", () => {
-  let paymentToken, treasury, deployer, user, provider, protocol;
+  let paymentToken,
+    treasury,
+    deployer,
+    user,
+    provider,
+    factory,
+    router,
+    protocol;
 
   beforeEach(async () => {
     [deployer, user] = await ethers.getSigners();
@@ -11,15 +21,28 @@ describe("Rance Treasury Contract Test", () => {
     paymentToken = await MockERC20.deploy("MUSD Token", "MUSD");
     const RanceTreasury = await ethers.getContractFactory("RanceTreasury");
     const RanceProtocol = await ethers.getContractFactory("RanceProtocol");
+    const Factory = new ethers.ContractFactory(
+      uniswapFactory.abi,
+      uniswapFactory.bytecode,
+      deployer
+    );
+    const Weth9 = new ethers.ContractFactory(
+      WETH9.abi,
+      WETH9.bytecode,
+      deployer
+    );
+    const Router = new ethers.ContractFactory(
+      uniswapRouter.abi,
+      uniswapRouter.bytecode,
+      deployer
+    );
     treasury = await RanceTreasury.deploy(deployer.getAddress());
+    factory = await Factory.deploy(deployer.getAddress());
+    const weth = await Weth9.deploy();
+    router = await Router.deploy(factory.address, weth.address);
     protocol = await upgrades.deployProxy(
       RanceProtocol,
-      [
-        treasury.address,
-        process.env.UNISWAP_ROUTER,
-        process.env.RANCE_TOKEN,
-        paymentToken.address,
-      ],
+      [treasury.address, router.address, paymentToken.address],
       { kind: "uups" }
     );
   });

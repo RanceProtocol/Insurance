@@ -9,7 +9,7 @@ async function main() {
   const Treasury = await ethers.getContractFactory("RanceTreasury");
   const Protocol = await ethers.getContractFactory("RanceProtocol");
   const treasury = await Treasury.deploy(admin.getAddress());
-  const protocol = await upgrades.deployProxy(
+  const protocol = await upgrades.upgradeProxy(
     Protocol,
     [treasury.address, process.env.UNISWAP_ROUTER, process.env.USDC],
     { kind: "uups" }

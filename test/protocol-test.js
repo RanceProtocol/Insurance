@@ -13,6 +13,7 @@ describe("Rance Protocol Test", () => {
     protocol,
     admin,
     user,
+    user1,
     timestamp,
     elapsedTime,
     insureCoin,
@@ -31,9 +32,10 @@ describe("Rance Protocol Test", () => {
     insureCoin2;
 
   beforeEach(async () => {
-    [admin, user] = await ethers.getSigners();
+    [admin, user, user1] = await ethers.getSigners();
     provider = waffle.provider;
     const adminAddress = admin.getAddress();
+    const user1Address = user1.getAddress();
     const RanceTreasury = await ethers.getContractFactory("RanceTreasury");
     const RanceProtocol = await ethers.getContractFactory("RanceProtocol");
     const MockERC20 = await ethers.getContractFactory("MockERC20");
@@ -71,10 +73,12 @@ describe("Rance Protocol Test", () => {
       protocol.address,
       ethers.utils.parseUnits("900000")
     );
+
     await paymentToken.approve(
       router.address,
       ethers.utils.parseUnits("900000")
     );
+
     await paymentToken.approve(
       treasury.address,
       ethers.utils.parseUnits("900000")
@@ -83,6 +87,12 @@ describe("Rance Protocol Test", () => {
       treasury.address,
       ethers.utils.parseUnits("40000")
     );
+
+    await paymentToken.mint(user1Address, ethers.utils.parseUnits("900000"));
+
+    await paymentToken
+      .connect(user1)
+      .approve(protocol.address, ethers.utils.parseUnits("900000"));
 
     await insureCoin.approve(
       protocol.address,
@@ -367,23 +377,25 @@ describe("Rance Protocol Test", () => {
     it("Should purchase a package plan with referrer", async () => {
       const amount = ethers.utils.parseUnits("200");
       const treasuryBalance = await paymentToken.balanceOf(treasury.address);
-      await protocol.insureWithReferrer(
-        planId2,
-        amount,
-        [paymentToken.address, insureCoin.address],
-        "WBTC",
-        "MUSD",
-        user.getAddress()
-      );
+      await protocol
+        .connect(user1)
+        .insureWithReferrer(
+          planId2,
+          amount,
+          [paymentToken.address, insureCoin.address],
+          "WBTC",
+          "MUSD",
+          admin.getAddress()
+        );
 
       const tx = await protocol.getAllUserPackages(
-        admin.getAddress(),
+        user1.getAddress(),
         ethers.BigNumber.from("0"),
-        ethers.BigNumber.from("2")
+        ethers.BigNumber.from("1")
       );
 
       const tx1 = await protocol.getAllUserReferrals(
-        user.getAddress(),
+        admin.getAddress(),
         ethers.BigNumber.from("0"),
         ethers.BigNumber.from("1")
       );
@@ -402,7 +414,7 @@ describe("Rance Protocol Test", () => {
       expect(tx[1].insureCoin).to.equal(insureCoin.address);
       expect(tx[1].paymentToken).to.equal(paymentToken.address);
       expect(postBalance).to.be.equal(treasuryBalance.add(insuranceFee));
-      expect(tx1[0].reward).to.equal(ethers.BigNumber.from(reward));
+      expect(tx1[0].rewardAmount).to.equal(ethers.BigNumber.from(reward));
       expect(tx1[0].token).to.equal(paymentToken.address);
       expect(tx1[0].referrer).to.equal(await user.getAddress());
       expect(tx1[0].claimed).to.be.false;
@@ -556,7 +568,7 @@ describe("Rance Protocol Test", () => {
       expect(protocol.withdraw(tx[0].packageId)).to.be.reverted;
     });
   });
-  describe("Claim() Test", () => {
+  describe("ClaimReferralReward() Test", () => {
     it("Should allow only reward owner to claim reward for a referral", async () => {
       const amount = ethers.utils.parseUnits("200");
       await protocol.insureWithReferrer(
@@ -572,7 +584,7 @@ describe("Rance Protocol Test", () => {
         ethers.BigNumber.from("0"),
         ethers.BigNumber.from("1")
       );
-      expect(protocol.claim([tx[0].referralId])).to.be.reverted;
+      expect(protocol.claimReferralReward([tx[0].referralId])).to.be.reverted;
     });
 
     it("Should claim reward for a referral", async () => {
@@ -591,7 +603,7 @@ describe("Rance Protocol Test", () => {
         ethers.BigNumber.from("1")
       );
       const treasuryBalance = await paymentToken.balanceOf(treasury.address);
-      await protocol.connect(user).claim([tx[0].referralId]);
+      await protocol.connect(user).claimReferralReward([tx[0].referralId]);
       tx = await protocol.getAllUserReferrals(
         user.getAddress(),
         ethers.BigNumber.from("0"),
@@ -605,7 +617,7 @@ describe("Rance Protocol Test", () => {
       expect(tx[0].token).to.equal(paymentToken.address);
       expect(tx[0].referrer).to.equal(await user.getAddress());
       expect(tx[0].claimed).to.be.true;
-      expect(postBalance).to.be.equal(treasuryBalance.sub(tx[0].reward));
+      expect(postBalance).to.be.equal(treasuryBalance.sub(tx[0].rewardAmount));
     });
 
     it("Should allow only reward owner that does'nt claim reward to claim for a referral", async () => {
@@ -623,9 +635,10 @@ describe("Rance Protocol Test", () => {
         ethers.BigNumber.from("0"),
         ethers.BigNumber.from("1")
       );
-      await protocol.connect(user).claim([tx[0].referralId]);
+      await protocol.connect(user).claimReferralReward([tx[0].referralId]);
 
-      expect(protocol.connect(user).claim([tx[0].referralId])).to.be.reverted;
+      expect(protocol.connect(user).claimReferralReward([tx[0].referralId])).to
+        .be.reverted;
     });
   });
 });

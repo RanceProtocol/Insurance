@@ -94,8 +94,8 @@ contract RanceProtocol is
      */
 
     struct ReferralReward{
-        bytes32 referralId;
-        uint reward;
+        bytes32 id;
+        uint rewardAmount;
         uint timestamp;
         address token;
         address referrer;
@@ -629,6 +629,8 @@ contract RanceProtocol is
         string memory _paymentToken,
         address _referrer
     ) external {
+        require(_referrer != address(0), "Rance Protocol: Address 0 is not allowed");
+        require(getUserPackagesLength(msg.sender) == 0 && _referrer != msg.sender, "Rance Protocol: Not Referrable");
         address _token = paymentTokenNameToAddress[_paymentToken];
         bytes32 _referralId = keccak256(abi.encodePacked(
             msg.sender,
@@ -637,14 +639,14 @@ contract RanceProtocol is
             block.timestamp
         ));
 
-        require(referrals[_referralId].referralId != _referralId, "Rance Protocol: Referral exist");
+        require(referrals[_referralId].id != _referralId, "Rance Protocol: Referral exist");
         uint insureAmount = getInsureAmount(_planId, _amount);
         uint insuranceFee = _amount.sub(insureAmount);
         uint referralReward = (insuranceFee.mul(referralPercentage)).div(100);
 
         ReferralReward memory referral = ReferralReward({
-            referralId: _referralId,
-            reward: referralReward,
+            id: _referralId,
+            rewardAmount: referralReward,
             timestamp: block.timestamp,
             token: _token,
             referrer: _referrer,
@@ -661,7 +663,7 @@ contract RanceProtocol is
 
     
 
-    function getUserPackagesLength(address _user) external view returns (uint){
+    function getUserPackagesLength(address _user) public view returns (uint){
         return userToPackageIds[_user].length;
     }
 
@@ -779,10 +781,10 @@ contract RanceProtocol is
      * @notice claim referral reward
      * @param _referralIds ids of referrals to claim
      */
-    function claim(bytes32[] memory _referralIds) external nonReentrant{
+    function claimReferralReward(bytes32[] memory _referralIds) external nonReentrant{
 
         for(uint i; i < _referralIds.length; i++){
-            require(referrals[_referralIds[i]].referralId == _referralIds[i], "Rance Protocol: Package does not exist");
+            require(referrals[_referralIds[i]].id == _referralIds[i], "Rance Protocol: Package does not exist");
 
             ReferralReward storage referral = referrals[_referralIds[i]];
             require(!referral.claimed && referral.referrer == msg.sender , "Rance Protocol: Referral reward Not Claimable");
@@ -792,10 +794,10 @@ contract RanceProtocol is
             treasury.withdrawToken(
                 referral.token, 
                 msg.sender, 
-                referral.reward
+                referral.rewardAmount
             );     
 
-            emit RewardClaimed(msg.sender, _referralIds[i], referral.reward);
+            emit RewardClaimed(msg.sender, _referralIds[i], referral.rewardAmount);
         }
     } 
 

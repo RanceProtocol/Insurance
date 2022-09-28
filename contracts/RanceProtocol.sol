@@ -281,10 +281,10 @@ contract RanceProtocol is
         __Ownable_init();
         treasury = IRanceTreasury(_treasuryAddress);
         uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-        paymentTokenNameToAddress["MUSD"] = _paymentToken;
+        paymentTokenNameToAddress["USDC"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
-        paymentTokens.push("MUSD");
+        paymentTokens.push("USDC");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
         uint80[3] memory uninsureFees = [1000 ether, 2000 ether, 5000 ether];
@@ -640,9 +640,7 @@ contract RanceProtocol is
         ));
 
         require(referrals[_referralId].id != _referralId, "Rance Protocol: Referral exist");
-        uint insureAmount = getInsureAmount(_planId, _amount);
-        uint insuranceFee = _amount.sub(insureAmount);
-        uint referralReward = (insuranceFee.mul(referralPercentage)).div(100);
+        uint referralReward = (_amount.mul(referralPercentage)).div(100);
 
         ReferralReward memory referral = ReferralReward({
             id: _referralId,

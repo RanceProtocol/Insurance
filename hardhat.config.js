@@ -75,7 +75,7 @@ module.exports = {
       },
     },
     polygon: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: "https://polygon-rpc.com",
       chainId: 137,
       accounts: {
         mnemonic,

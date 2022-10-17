@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@sphynxswap/swap-core/contracts/interfaces/ISphynxRouter01.sol";
+import "./interfaces/ISphynxRouter01.sol";
 import "./interfaces/IRanceTreasury.sol";
 import "hardhat/console.sol";
 

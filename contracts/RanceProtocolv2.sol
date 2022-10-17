@@ -9,11 +9,11 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@sphynxswap/swap-core/contracts/interfaces/ISphynxRouter01.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IRanceTreasury.sol";
 import "hardhat/console.sol";
 
-contract RanceProtocol is 
+contract RanceProtocolv2 is 
     Initializable, 
     UUPSUpgradeable, 
     OwnableUpgradeable, 
@@ -21,7 +21,7 @@ contract RanceProtocol is
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint;
 
-    ISphynxRouter01 public sphynxRouter;
+    IUniswapV2Router02 public uniswapRouter;
 
     /**
     *  @dev Instance of the insurance treasury (used to handle insurance funds).
@@ -52,8 +52,6 @@ contract RanceProtocol is
 
     string[] public insureCoins;
 
-    
-
 
     /**
      * @dev data of Package Plan on the Insurance Protocol
@@ -82,21 +80,6 @@ contract RanceProtocol is
         bool isWithdrawn;
         address insureCoin;
         address paymentToken;
-    }
-
-
-    /**
-     * @dev data of ReferralReward on the Insurance Protocol
-     */
-
-    struct ReferralReward{
-        bytes32 id;
-        uint rewardAmount;
-        uint timestamp;
-        address token;
-        address referrer;
-        address user;
-        bool claimed;
     }
 
     /**
@@ -143,17 +126,6 @@ contract RanceProtocol is
      * @dev check if insure Coin is added
      */
     mapping(address => bool) public insureCoinAdded;
-
-    /**
-     * @dev list of all referral ids referred per user
-     */
-    mapping(address => bytes32[]) public userToReferralIds; 
-
-
-    /**
-     * @dev retrieve ReferralReward with referral id
-     */
-     mapping(bytes32 => ReferralReward) public referrals;
 
 
     /**
@@ -231,35 +203,6 @@ contract RanceProtocol is
      */
     event RanceAddressSet(address indexed _address);
 
-
-    /**
-     * @dev Emitted when a user refer someone
-     */
-    event Referred(
-        address indexed referrer, 
-        address indexed user, 
-        uint amount, 
-        uint timestamp
-    );
-
-
-    /**
-     * @dev Emitted when a user claim refferal rewards
-     */
-    event RewardClaimed(address indexed user, bytes32 indexed referralId, uint amount);
-
-    /**
-     * @dev Emitted when the referral percentage is set
-     */
-    event ReferralRewardUpdated(uint newPercentage);
-
-    /** 
-    * @dev referral percentage
-    */
-
-    uint public referralPercentage;
-
-
     /**
      * @dev check that the address passed is not 0. 
      */
@@ -272,24 +215,24 @@ contract RanceProtocol is
     /**
      * @notice Contract constructor
      * @param _treasuryAddress treasury contract address
-     * @param _sphynxRouter mmfinance router address
+     * @param _uniswapRouter mmfinance router address
      * @param _paymentToken BUSD token address
      */
     function initialize(
         address _treasuryAddress,
-         address _sphynxRouter,
+         address _uniswapRouter,
          address _paymentToken)
         public initializer { 
         __Ownable_init();
         treasury = IRanceTreasury(_treasuryAddress);
-        sphynxRouter = ISphynxRouter01(_sphynxRouter);
-        paymentTokenNameToAddress["USDT"] = _paymentToken;
+        uniswapRouter = IUniswapV2Router02(_uniswapRouter);
+        paymentTokenNameToAddress["BUSD"] = _paymentToken;
         paymentTokenAdded[_paymentToken] = true;
         totalInsuranceLocked[_paymentToken] = 0;
-        paymentTokens.push("USDT");
+        paymentTokens.push("BUSD");
         uint32[3] memory periodInSeconds = [15780000, 31560000, 63120000];
         uint8[3] memory insuranceFees = [100, 50, 25];
-        uint80[3] memory uninsureFees = [1000 ether, 2000 ether, 5000 ether];
+        uint72[3] memory uninsureFees = [500 ether, 1000 ether, 2000 ether];
         bytes32[3] memory ids = [
             keccak256(abi.encodePacked(periodInSeconds[0],insuranceFees[0],uninsureFees[0])),
             keccak256(abi.encodePacked(periodInSeconds[1],insuranceFees[1],uninsureFees[1])),
@@ -304,7 +247,7 @@ contract RanceProtocol is
                 true);
             packagePlanIds.push(ids[i]);   
         }
-        IERC20Upgradeable(_paymentToken).approve(address(sphynxRouter), type(uint256).max);
+        IERC20Upgradeable(_paymentToken).approve(address(uniswapRouter), type(uint256).max);
 
     }
 
@@ -337,20 +280,6 @@ contract RanceProtocol is
         RANCE = IERC20Upgradeable(_token);
         emit RanceAddressSet(_token);
     }
-
-
-    /**
-     * @notice update the percentage of the referral fee
-     * @param _percentage of the updated referral fee 
-     */
-    function updateReferralReward(uint _percentage)
-        external onlyOwner
-    {
-        require(_percentage != 0, "Rance Protocol: percentage cannot be 0");
-        referralPercentage = _percentage;
-        emit ReferralRewardUpdated(_percentage);
-    }
-
 
     /**
      * @notice get the totalinsurancelocked of a payment token
@@ -470,7 +399,7 @@ contract RanceProtocol is
         paymentTokenNameToAddress[_tokenName] = _token;
         totalInsuranceLocked[_token] = 0;
         paymentTokens.push(_tokenName);
-        IERC20Upgradeable(_token).approve(address(sphynxRouter), type(uint256).max);
+        IERC20Upgradeable(_token).approve(address(uniswapRouter), type(uint256).max);
 
         emit PaymentTokenAdded(_tokenName, _token);
     }
@@ -490,7 +419,7 @@ contract RanceProtocol is
                 paymentTokens.pop();
             }
         }
-        IERC20Upgradeable(_token).approve(address(sphynxRouter), 0);
+        IERC20Upgradeable(_token).approve(address(uniswapRouter), 0);
 
         emit PaymentTokenRemoved(_token);
     }
@@ -564,7 +493,7 @@ contract RanceProtocol is
         address[] memory path,
         string memory _insureCoin,
         string memory _paymentToken
-        ) public{
+        ) external{
         require(planIdToPackagePlan[_planId].isActivated, "Rance Protocol: PackagePlan not active");
         require(insureCoinAdded[insureCoinNameToAddress[_insureCoin]], "Rance Protocol:insureCoin not supported");
         require(paymentTokenAdded[paymentTokenNameToAddress[_paymentToken]], "Rance Protocol:paymentToken not supported");
@@ -591,7 +520,7 @@ contract RanceProtocol is
             planId: _planId,
             packageId: _packageId,
             initialDeposit: insureAmount,
-            insureOutput: sphynxRouter.getAmountsOut(insureAmount, path)[path.length - 1],
+            insureOutput: uniswapRouter.getAmountsOut(insureAmount, path)[path.length - 1],
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
             isCancelled: false,
@@ -614,64 +543,8 @@ contract RanceProtocol is
         );
     }
 
-
-    /**
-     * @notice purchases an insurance package with referrer
-     * @param _planId id of the package plan 
-     * @param _amount the amount deposited
-     * @param _insureCoin the insureCoin choosen by the user
-     * @param _paymentToken the payment token deposited
-     * @param _referrer the referrer address
-     */
-    function insureWithReferrer(
-        bytes32 _planId,
-        uint _amount,
-        address[] memory path,
-        string memory _insureCoin,
-        string memory _paymentToken,
-        address _referrer
-    ) external {
-        require(_referrer != address(0), "Rance Protocol: Address 0 is not allowed");
-        require(getUserPackagesLength(msg.sender) == 0 && _referrer != msg.sender, "Rance Protocol: Not Referrable");
-        address _token = paymentTokenNameToAddress[_paymentToken];
-        bytes32 _referralId = keccak256(abi.encodePacked(
-            msg.sender,
-            _referrer,
-            _token,
-            block.timestamp
-        ));
-
-        require(referrals[_referralId].id != _referralId, "Rance Protocol: Referral exist");
-        uint insureAmount = getInsureAmount(_planId, _amount);
-        uint insuranceFee = _amount.sub(insureAmount);
-        uint referralReward = (insuranceFee.mul(referralPercentage)).div(100);
-
-        ReferralReward memory referral = ReferralReward({
-            id: _referralId,
-            rewardAmount: referralReward,
-            timestamp: block.timestamp,
-            token: _token,
-            referrer: _referrer,
-            user: msg.sender,
-            claimed: false
-        });
-
-        referrals[_referralId] = referral;
-        userToReferralIds[_referrer].push(_referralId);
-        insure(_planId, _amount, path, _insureCoin, _paymentToken);
-        
-        emit Referred(_referrer, msg.sender, referralReward, block.timestamp);
-    }
-
-    
-
-    function getUserPackagesLength(address _user) public view returns (uint){
+    function getUserPackagesLength(address _user) external view returns (uint){
         return userToPackageIds[_user].length;
-    }
-
-
-    function getUserReferralsLength(address _user) external view returns (uint){
-        return userToReferralIds[_user].length;
     }
 
     /**
@@ -686,22 +559,6 @@ contract RanceProtocol is
         
         return output;
     }
-
-
-    /**
-     * @notice get all user referrals
-     * @return Package return array of user referrals
-     */
-    function getAllUserReferrals(address _user, uint cursor, uint length) external view returns(ReferralReward[] memory) {
-        ReferralReward[] memory output = new ReferralReward[](length);
-        for (uint n = cursor;  n < length;  n = n + 1) {
-            output[n] = referrals[userToReferralIds[_user][n]];
-        }
-        
-        return output;
-    }
-
-
 
     /**
      * @notice cancel insurance package
@@ -778,32 +635,6 @@ contract RanceProtocol is
         );
     } 
 
-
-    /**
-     * @notice claim referral reward
-     * @param _referralIds ids of referrals to claim
-     */
-    function claimReferralReward(bytes32[] memory _referralIds) external nonReentrant{
-
-        for(uint i; i < _referralIds.length; i++){
-            require(referrals[_referralIds[i]].id == _referralIds[i], "Rance Protocol: Package does not exist");
-
-            ReferralReward storage referral = referrals[_referralIds[i]];
-            require(!referral.claimed && referral.referrer == msg.sender , "Rance Protocol: Referral reward Not Claimable");
-
-            referral.claimed = true;
-
-            treasury.withdrawToken(
-                referral.token, 
-                msg.sender, 
-                referral.rewardAmount
-            );     
-
-            emit RewardClaimed(msg.sender, _referralIds[i], referral.rewardAmount);
-        }
-    } 
-
-
     /**
      * @notice get the calculated insure Amount
      * @param _planId id of the package plan
@@ -830,8 +661,8 @@ contract RanceProtocol is
         uint _amount
     ) private{
         uint deadline = block.timestamp;
-        uint amountOutMin = sphynxRouter.getAmountsOut(_amount, path)[path.length - 1];
-        sphynxRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
+        uint amountOutMin = uniswapRouter.getAmountsOut(_amount, path)[path.length - 1];
+        uniswapRouter.swapExactTokensForTokens(_amount, amountOutMin, path, _to, deadline);
     }
 
 

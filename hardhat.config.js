@@ -75,8 +75,18 @@ module.exports = {
       },
     },
     polygon: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: "https://polygon-rpc.com",
       chainId: 137,
+      accounts: {
+        mnemonic,
+        path: "m/44'/60'/0'/0",
+        inittialIndex: 0,
+        count: 10,
+      },
+    },
+    brise: {
+      url: "https://rpc.icecreamswap.com",
+      chainId: 32520,
       accounts: {
         mnemonic,
         path: "m/44'/60'/0'/0",

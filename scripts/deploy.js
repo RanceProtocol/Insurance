@@ -9,30 +9,26 @@ async function main() {
   const Treasury = await ethers.getContractFactory("RanceTreasury");
   const Protocol = await ethers.getContractFactory("RanceProtocol");
   const treasury = await Treasury.deploy(admin.getAddress());
-  const protocol = await upgrades.upgradeProxy(
+  const protocol = await upgrades.deployProxy(
     Protocol,
-    [treasury.address, process.env.UNISWAP_ROUTER, process.env.USDC],
+    [treasury.address, process.env.UNISWAP_ROUTER, process.env.USDT],
     { kind: "uups" }
   );
-  const MockERC20 = await ethers.getContractFactory("MockERC20");
-  const rance = await MockERC20.deploy("Rance Token", "RANCE");
+  /* const MockERC20 = await ethers.getContractFactory("MockERC20");
+  const rance = await MockERC20.deploy("Rance Token", "RANCE"); */
 
   await treasury.setInsuranceProtocolAddress(protocol.address);
+  await protocol.addPaymentToken("USDC", process.env.USDC);
+  await protocol.updateReferralReward(ethers.BigNumber.from("5"));
   await protocol.addInsureCoins(
-    ["WBTC", "WETH", "MMF", "WMATIC"],
-    [process.env.WBTC, process.env.WETH, process.env.MMF, process.env.WMATIC]
+    ["SPHYNX", "WBRISE", "BNB"],
+    [process.env.SPHYNX, process.env.WBRISE, process.env.BNB]
   );
 
-  await protocol.setRance(rance.address);
-  await rance.mint(
-    process.env.ADMIN_ADDRESS,
-    ethers.utils.parseUnits("100000000")
-  );
-  await protocol.transferOwnership(process.env.ADMIN_ADDRESS);
-  await treasury.addAdmin(process.env.ADMIN_ADDRESS);
-  console.log(
-    `Treasury: ${treasury.address} , Protocol: ${protocol.address}, Rance: ${rance.address}`
-  );
+  // await protocol.transferOwnership(process.env.ADMIN_ADDRESS);
+  // await treasury.addAdmin(process.env.ADMIN_ADDRESS);
+  console.log(`Protocol: ${protocol.address},
+  Treasury: ${treasury.address}`);
 }
 // module.exports = [admin.getAddress()];
 main().catch((error) => {

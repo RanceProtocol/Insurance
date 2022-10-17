@@ -2,34 +2,50 @@
   "manifestVersion": "3.2",
   "proxies": [
     {
-      "address": "0x2C581276F609A4c5c2fC09507fe9CdC6b2A72030",
-      "txHash": "0x1b014810d934f436a28c971738655fe2b6db6d9915a5a858aa8b58998de864d1",
+      "address": "0x11755225106C70b53628bc51bf53C94B21A1D3ec",
+      "txHash": "0xfa7a3dc94b21ddbe92ea607403544139786d03453094a070344d10214c56ede9",
       "kind": "uups"
     },
     {
-      "address": "0xD032336EB682E702A4AAEDd15140733421a66150",
-      "txHash": "0x204ca4d23ca1fb9a730b29d6f2013dda9b7b9a560ecc88149ab418c47f60e7f3",
+      "address": "0xb6d2129f52AEd6Aea745c3a1a9b5f0C6a7C89e9b",
+      "txHash": "0xd91ba7b5e355d107e413afde15935ba2a4c4263cfab67632833f174c6b865a0a",
       "kind": "uups"
     },
     {
-      "address": "0x5E9260FeB89644D3FB5331296eBd119d240F2190",
-      "txHash": "0x38fb36f34cea7693e0ab7bb3f8c2d6e99de6ff1d7857fb66f4a64bdcb3f62659",
+      "address": "0x9B548CF19C7A807cbE64281E34d169225D1a6c8d",
+      "txHash": "0xe0ba451c8766ec296986ce4d2aaf91973e226a582d7c33428e343587c6f9701d",
       "kind": "uups"
     },
     {
-      "address": "0x29062E2B9771FB81Cd088245B4137F538B65099b",
-      "txHash": "0x1a5fbc109e873ed231c522e2dccc77702d0f2a61a116516e4b34bdc13d582385",
+      "address": "0x44D3BF034ABDDF543B3daB597eA6370C17B43b79",
+      "txHash": "0x424f8cf888697e2df5560f795377535e05720f4e4d431aa637d9160a8267f6fa",
       "kind": "uups"
     },
     {
-      "address": "0xb61F97B7176b17f6732D457649D3E322FE5e5893",
+      "address": "0x3ee9184680f9BB2334F67d83609bdc16d70F19E0",
+      "txHash": "0xff739d7bb8fc431d13645ecff70a4528d3a5daa5fae3325ee33fa4a5e52e4e50",
+      "kind": "uups"
+    },
+    {
+      "address": "0x905A17b4a7558EE692c5163274e61dBdED8924e0",
+      "txHash": "0x8dc33b80df6cda822c91921d465e40121915d705c2e2455ca547497b4d1a290d",
+      "kind": "uups"
+    },
+    {
+      "address": "0x552F384af601d1Fda3998d7dDB417d993Beef34b",
+      "txHash": "0xa363b2b20ebfe703ee2215f742d82a98daeeff37795390cef0f2375cc6e8c220",
+      "kind": "uups"
+    },
+    {
+      "address": "0xec35f18e088dc5BaDaBc3Dfd82780478C9EFaaf0",
+      "txHash": "0x8ff693c0c2a6fbd1f5ecdfcb0f05ecf9f6f74cfe28f8207c49f379ada9e34118",
       "kind": "uups"
     }
   ],
   "impls": {
-    "a4fffb6b0fdfb8fdb1148c15613983e5d0ed5fbc3d9067d32765f01225c52c6e": {
-      "address": "0x26f536ec63639c03c69aFC18FDCeeA99A47Dc0D0",
-      "txHash": "0xe860fa1dc70a95b4c9163c684dc9fdbd37f12c0415c5b7a80b575d8b9a7a00cc",
+    "d72d1baa5fdb0f30f097cfab7f005b921f2b887310c466d9208eaf7d0b7d7eb6": {
+      "address": "0xac57946e759bbFD8Ff2513Ef99a0473d7511012a",
+      "txHash": "0x8804a5f6e56864e33318417a83c9a36088ab14173a4b3976276fb9c5a548d216",
       "layout": {
         "storage": [
           {
@@ -117,780 +133,7 @@
             "label": "treasury",
             "offset": 0,
             "slot": "252",
-            "type": "t_contract(IRanceTreasury)5966",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:29"
-          },
-          {
-            "label": "RANCE",
-            "offset": 0,
-            "slot": "253",
-            "type": "t_contract(IERC20Upgradeable)927",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:34"
-          },
-          {
-            "label": "packagePlanIds",
-            "offset": 0,
-            "slot": "254",
-            "type": "t_array(t_bytes32)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:40"
-          },
-          {
-            "label": "paymentTokens",
-            "offset": 0,
-            "slot": "255",
-            "type": "t_array(t_string_storage)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:46"
-          },
-          {
-            "label": "insureCoins",
-            "offset": 0,
-            "slot": "256",
-            "type": "t_array(t_string_storage)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:53"
-          },
-          {
-            "label": "userToPackageIds",
-            "offset": 0,
-            "slot": "257",
-            "type": "t_mapping(t_address,t_array(t_bytes32)dyn_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:88"
-          },
-          {
-            "label": "planIdToPackagePlan",
-            "offset": 0,
-            "slot": "258",
-            "type": "t_mapping(t_bytes32,t_struct(PackagePlan)4165_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:93"
-          },
-          {
-            "label": "packageIdToPackage",
-            "offset": 0,
-            "slot": "259",
-            "type": "t_mapping(t_bytes32,t_struct(Package)4188_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:99"
-          },
-          {
-            "label": "paymentTokenNameToAddress",
-            "offset": 0,
-            "slot": "260",
-            "type": "t_mapping(t_string_memory_ptr,t_address)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:105"
-          },
-          {
-            "label": "insureCoinNameToAddress",
-            "offset": 0,
-            "slot": "261",
-            "type": "t_mapping(t_string_memory_ptr,t_address)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:111"
-          },
-          {
-            "label": "totalInsuranceLocked",
-            "offset": 0,
-            "slot": "262",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:117"
-          },
-          {
-            "label": "paymentTokenAdded",
-            "offset": 0,
-            "slot": "263",
-            "type": "t_mapping(t_address,t_bool)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:123"
-          },
-          {
-            "label": "insureCoinAdded",
-            "offset": 0,
-            "slot": "264",
-            "type": "t_mapping(t_address,t_bool)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:128"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address",
-            "numberOfBytes": "20"
-          },
-          "t_array(t_bytes32)dyn_storage": {
-            "label": "bytes32[]",
-            "numberOfBytes": "32"
-          },
-          "t_array(t_string_storage)dyn_storage": {
-            "label": "string[]",
-            "numberOfBytes": "32"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
-          },
-          "t_bytes32": {
-            "label": "bytes32",
-            "numberOfBytes": "32"
-          },
-          "t_contract(IERC20Upgradeable)927": {
-            "label": "contract IERC20Upgradeable",
-            "numberOfBytes": "20"
-          },
-          "t_contract(IRanceTreasury)5966": {
-            "label": "contract IRanceTreasury",
-            "numberOfBytes": "20"
-          },
-          "t_contract(IUniswapV2Router02)4066": {
-            "label": "contract IUniswapV2Router02",
-            "numberOfBytes": "20"
-          },
-          "t_mapping(t_address,t_array(t_bytes32)dyn_storage)": {
-            "label": "mapping(address => bytes32[])",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(Package)4188_storage)": {
-            "label": "mapping(bytes32 => struct RanceProtocol.Package)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(PackagePlan)4165_storage)": {
-            "label": "mapping(bytes32 => struct RanceProtocol.PackagePlan)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_string_memory_ptr,t_address)": {
-            "label": "mapping(string => address)",
-            "numberOfBytes": "32"
-          },
-          "t_string_memory_ptr": {
-            "label": "string",
-            "numberOfBytes": "32"
-          },
-          "t_string_storage": {
-            "label": "string",
-            "numberOfBytes": "32"
-          },
-          "t_struct(Package)4188_storage": {
-            "label": "struct RanceProtocol.Package",
-            "members": [
-              {
-                "label": "user",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "planId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "packageId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "initialDeposit",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "insureOutput",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "startTimestamp",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "5"
-              },
-              {
-                "label": "endTimestamp",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "6"
-              },
-              {
-                "label": "isCancelled",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "7"
-              },
-              {
-                "label": "isWithdrawn",
-                "type": "t_bool",
-                "offset": 1,
-                "slot": "7"
-              },
-              {
-                "label": "insureCoin",
-                "type": "t_address",
-                "offset": 2,
-                "slot": "7"
-              },
-              {
-                "label": "paymentToken",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "8"
-              }
-            ],
-            "numberOfBytes": "288"
-          },
-          "t_struct(PackagePlan)4165_storage": {
-            "label": "struct RanceProtocol.PackagePlan",
-            "members": [
-              {
-                "label": "planId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "periodInSeconds",
-                "type": "t_uint32",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "insuranceFee",
-                "type": "t_uint8",
-                "offset": 4,
-                "slot": "1"
-              },
-              {
-                "label": "uninsureFee",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "isActivated",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "3"
-              }
-            ],
-            "numberOfBytes": "128"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          },
-          "t_uint32": {
-            "label": "uint32",
-            "numberOfBytes": "4"
-          },
-          "t_uint8": {
-            "label": "uint8",
-            "numberOfBytes": "1"
-          }
-        }
-      }
-    },
-    "313c98a9850b87723f680188d8fee2b68a5c34f9c0501614c7283986db62e033": {
-      "address": "0x5283D6565E8FA7c26f74d0D5a57835591DbE97C6",
-      "txHash": "0xe07b5c9659d51c8e229cb34123b6be27aceed66da05f06544683fc17e1e80185",
-      "layout": {
-        "storage": [
-          {
-            "label": "_initialized",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_uint8",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
-            "retypedFrom": "bool"
-          },
-          {
-            "label": "_initializing",
-            "offset": 1,
-            "slot": "0",
-            "type": "t_bool",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "1",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC1967UpgradeUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "51",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "UUPSUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "101",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
-          },
-          {
-            "label": "_owner",
-            "offset": 0,
-            "slot": "151",
-            "type": "t_address",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "152",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:87"
-          },
-          {
-            "label": "_status",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_uint256",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "202",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
-          },
-          {
-            "label": "uniswapRouter",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_contract(IUniswapV2Router02)4066",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:24"
-          },
-          {
-            "label": "treasury",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_contract(IRanceTreasury)5988",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:29"
-          },
-          {
-            "label": "RANCE",
-            "offset": 0,
-            "slot": "253",
-            "type": "t_contract(IERC20Upgradeable)927",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:34"
-          },
-          {
-            "label": "packagePlanIds",
-            "offset": 0,
-            "slot": "254",
-            "type": "t_array(t_bytes32)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:40"
-          },
-          {
-            "label": "paymentTokens",
-            "offset": 0,
-            "slot": "255",
-            "type": "t_array(t_string_storage)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:46"
-          },
-          {
-            "label": "insureCoins",
-            "offset": 0,
-            "slot": "256",
-            "type": "t_array(t_string_storage)dyn_storage",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:53"
-          },
-          {
-            "label": "userToPackageIds",
-            "offset": 0,
-            "slot": "257",
-            "type": "t_mapping(t_address,t_array(t_bytes32)dyn_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:88"
-          },
-          {
-            "label": "planIdToPackagePlan",
-            "offset": 0,
-            "slot": "258",
-            "type": "t_mapping(t_bytes32,t_struct(PackagePlan)4165_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:93"
-          },
-          {
-            "label": "packageIdToPackage",
-            "offset": 0,
-            "slot": "259",
-            "type": "t_mapping(t_bytes32,t_struct(Package)4188_storage)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:99"
-          },
-          {
-            "label": "paymentTokenNameToAddress",
-            "offset": 0,
-            "slot": "260",
-            "type": "t_mapping(t_string_memory_ptr,t_address)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:105"
-          },
-          {
-            "label": "insureCoinNameToAddress",
-            "offset": 0,
-            "slot": "261",
-            "type": "t_mapping(t_string_memory_ptr,t_address)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:111"
-          },
-          {
-            "label": "totalInsuranceLocked",
-            "offset": 0,
-            "slot": "262",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:117"
-          },
-          {
-            "label": "paymentTokenAdded",
-            "offset": 0,
-            "slot": "263",
-            "type": "t_mapping(t_address,t_bool)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:123"
-          },
-          {
-            "label": "insureCoinAdded",
-            "offset": 0,
-            "slot": "264",
-            "type": "t_mapping(t_address,t_bool)",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:128"
-          }
-        ],
-        "types": {
-          "t_address": {
-            "label": "address",
-            "numberOfBytes": "20"
-          },
-          "t_array(t_bytes32)dyn_storage": {
-            "label": "bytes32[]",
-            "numberOfBytes": "32"
-          },
-          "t_array(t_string_storage)dyn_storage": {
-            "label": "string[]",
-            "numberOfBytes": "32"
-          },
-          "t_array(t_uint256)49_storage": {
-            "label": "uint256[49]",
-            "numberOfBytes": "1568"
-          },
-          "t_array(t_uint256)50_storage": {
-            "label": "uint256[50]",
-            "numberOfBytes": "1600"
-          },
-          "t_bool": {
-            "label": "bool",
-            "numberOfBytes": "1"
-          },
-          "t_bytes32": {
-            "label": "bytes32",
-            "numberOfBytes": "32"
-          },
-          "t_contract(IERC20Upgradeable)927": {
-            "label": "contract IERC20Upgradeable",
-            "numberOfBytes": "20"
-          },
-          "t_contract(IRanceTreasury)5988": {
-            "label": "contract IRanceTreasury",
-            "numberOfBytes": "20"
-          },
-          "t_contract(IUniswapV2Router02)4066": {
-            "label": "contract IUniswapV2Router02",
-            "numberOfBytes": "20"
-          },
-          "t_mapping(t_address,t_array(t_bytes32)dyn_storage)": {
-            "label": "mapping(address => bytes32[])",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_bool)": {
-            "label": "mapping(address => bool)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(Package)4188_storage)": {
-            "label": "mapping(bytes32 => struct RanceProtocol.Package)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_bytes32,t_struct(PackagePlan)4165_storage)": {
-            "label": "mapping(bytes32 => struct RanceProtocol.PackagePlan)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_string_memory_ptr,t_address)": {
-            "label": "mapping(string => address)",
-            "numberOfBytes": "32"
-          },
-          "t_string_memory_ptr": {
-            "label": "string",
-            "numberOfBytes": "32"
-          },
-          "t_string_storage": {
-            "label": "string",
-            "numberOfBytes": "32"
-          },
-          "t_struct(Package)4188_storage": {
-            "label": "struct RanceProtocol.Package",
-            "members": [
-              {
-                "label": "user",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "planId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "packageId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "initialDeposit",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "3"
-              },
-              {
-                "label": "insureOutput",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "4"
-              },
-              {
-                "label": "startTimestamp",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "5"
-              },
-              {
-                "label": "endTimestamp",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "6"
-              },
-              {
-                "label": "isCancelled",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "7"
-              },
-              {
-                "label": "isWithdrawn",
-                "type": "t_bool",
-                "offset": 1,
-                "slot": "7"
-              },
-              {
-                "label": "insureCoin",
-                "type": "t_address",
-                "offset": 2,
-                "slot": "7"
-              },
-              {
-                "label": "paymentToken",
-                "type": "t_address",
-                "offset": 0,
-                "slot": "8"
-              }
-            ],
-            "numberOfBytes": "288"
-          },
-          "t_struct(PackagePlan)4165_storage": {
-            "label": "struct RanceProtocol.PackagePlan",
-            "members": [
-              {
-                "label": "planId",
-                "type": "t_bytes32",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "periodInSeconds",
-                "type": "t_uint32",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "insuranceFee",
-                "type": "t_uint8",
-                "offset": 4,
-                "slot": "1"
-              },
-              {
-                "label": "uninsureFee",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "2"
-              },
-              {
-                "label": "isActivated",
-                "type": "t_bool",
-                "offset": 0,
-                "slot": "3"
-              }
-            ],
-            "numberOfBytes": "128"
-          },
-          "t_uint256": {
-            "label": "uint256",
-            "numberOfBytes": "32"
-          },
-          "t_uint32": {
-            "label": "uint32",
-            "numberOfBytes": "4"
-          },
-          "t_uint8": {
-            "label": "uint8",
-            "numberOfBytes": "1"
-          }
-        }
-      }
-    },
-    "291b815ff62b97fb3dde7edc494498d9445775ac07db1f52af39c6d1dc01ac49": {
-      "address": "0xE42B6ed07e3b674B7EFdAEc11e65b4C8587bB647",
-      "layout": {
-        "storage": [
-          {
-            "label": "_initialized",
-            "offset": 0,
-            "slot": "0",
-            "type": "t_uint8",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
-            "retypedFrom": "bool"
-          },
-          {
-            "label": "_initializing",
-            "offset": 1,
-            "slot": "0",
-            "type": "t_bool",
-            "contract": "Initializable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "1",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ERC1967UpgradeUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "51",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "UUPSUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "101",
-            "type": "t_array(t_uint256)50_storage",
-            "contract": "ContextUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
-          },
-          {
-            "label": "_owner",
-            "offset": 0,
-            "slot": "151",
-            "type": "t_address",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "152",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "OwnableUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:87"
-          },
-          {
-            "label": "_status",
-            "offset": 0,
-            "slot": "201",
-            "type": "t_uint256",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "202",
-            "type": "t_array(t_uint256)49_storage",
-            "contract": "ReentrancyGuardUpgradeable",
-            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
-          },
-          {
-            "label": "uniswapRouter",
-            "offset": 0,
-            "slot": "251",
-            "type": "t_contract(IUniswapV2Router02)4066",
-            "contract": "RanceProtocol",
-            "src": "contracts/RanceProtocol.sol:24"
-          },
-          {
-            "label": "treasury",
-            "offset": 0,
-            "slot": "252",
-            "type": "t_contract(IRanceTreasury)6364",
+            "type": "t_contract(IRanceTreasury)8021",
             "contract": "RanceProtocol",
             "src": "contracts/RanceProtocol.sol:29"
           },
@@ -1048,7 +291,7 @@
             "label": "contract IERC20Upgradeable",
             "numberOfBytes": "20"
           },
-          "t_contract(IRanceTreasury)6364": {
+          "t_contract(IRanceTreasury)8021": {
             "label": "contract IRanceTreasury",
             "numberOfBytes": "20"
           },
@@ -1201,6 +444,469 @@
             "numberOfBytes": "128"
           },
           "t_struct(ReferralReward)4206_storage": {
+            "label": "struct RanceProtocol.ReferralReward",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "rewardAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "token",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "referrer",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "user",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "claimed",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "5"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "07ad912231bfe98adfb3819b10f8192b09a3db0145deec0b38a876fca6d0405d": {
+      "address": "0xa92CF4945dC605e29a72A965Ef55f2D342c70f8A",
+      "txHash": "0xcaf2d57ca4ba83c3bc19af74bc1cc4d5a6690c965f704b9ce53692ebcedd5052",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC1967UpgradeUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:211"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "UUPSUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:107"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:87"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "201",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "202",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:74"
+          },
+          {
+            "label": "sphynxRouter",
+            "offset": 0,
+            "slot": "251",
+            "type": "t_contract(ISphynxRouter01)3982",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:24"
+          },
+          {
+            "label": "treasury",
+            "offset": 0,
+            "slot": "252",
+            "type": "t_contract(IRanceTreasury)8333",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:29"
+          },
+          {
+            "label": "RANCE",
+            "offset": 0,
+            "slot": "253",
+            "type": "t_contract(IERC20Upgradeable)927",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:34"
+          },
+          {
+            "label": "packagePlanIds",
+            "offset": 0,
+            "slot": "254",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:40"
+          },
+          {
+            "label": "paymentTokens",
+            "offset": 0,
+            "slot": "255",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:46"
+          },
+          {
+            "label": "insureCoins",
+            "offset": 0,
+            "slot": "256",
+            "type": "t_array(t_string_storage)dyn_storage",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:53"
+          },
+          {
+            "label": "userToPackageIds",
+            "offset": 0,
+            "slot": "257",
+            "type": "t_mapping(t_address,t_array(t_bytes32)dyn_storage)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:105"
+          },
+          {
+            "label": "planIdToPackagePlan",
+            "offset": 0,
+            "slot": "258",
+            "type": "t_mapping(t_bytes32,t_struct(PackagePlan)4477_storage)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:110"
+          },
+          {
+            "label": "packageIdToPackage",
+            "offset": 0,
+            "slot": "259",
+            "type": "t_mapping(t_bytes32,t_struct(Package)4500_storage)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:116"
+          },
+          {
+            "label": "paymentTokenNameToAddress",
+            "offset": 0,
+            "slot": "260",
+            "type": "t_mapping(t_string_memory_ptr,t_address)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:122"
+          },
+          {
+            "label": "insureCoinNameToAddress",
+            "offset": 0,
+            "slot": "261",
+            "type": "t_mapping(t_string_memory_ptr,t_address)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:128"
+          },
+          {
+            "label": "totalInsuranceLocked",
+            "offset": 0,
+            "slot": "262",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:134"
+          },
+          {
+            "label": "paymentTokenAdded",
+            "offset": 0,
+            "slot": "263",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:140"
+          },
+          {
+            "label": "insureCoinAdded",
+            "offset": 0,
+            "slot": "264",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:145"
+          },
+          {
+            "label": "userToReferralIds",
+            "offset": 0,
+            "slot": "265",
+            "type": "t_mapping(t_address,t_array(t_bytes32)dyn_storage)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:150"
+          },
+          {
+            "label": "referrals",
+            "offset": 0,
+            "slot": "266",
+            "type": "t_mapping(t_bytes32,t_struct(ReferralReward)4515_storage)",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:156"
+          },
+          {
+            "label": "referralPercentage",
+            "offset": 0,
+            "slot": "267",
+            "type": "t_uint256",
+            "contract": "RanceProtocol",
+            "src": "contracts/RanceProtocol.sol:260"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_string_storage)dyn_storage": {
+            "label": "string[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IERC20Upgradeable)927": {
+            "label": "contract IERC20Upgradeable",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IRanceTreasury)8333": {
+            "label": "contract IRanceTreasury",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ISphynxRouter01)3982": {
+            "label": "contract ISphynxRouter01",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_bytes32)dyn_storage)": {
+            "label": "mapping(address => bytes32[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(Package)4500_storage)": {
+            "label": "mapping(bytes32 => struct RanceProtocol.Package)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(PackagePlan)4477_storage)": {
+            "label": "mapping(bytes32 => struct RanceProtocol.PackagePlan)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(ReferralReward)4515_storage)": {
+            "label": "mapping(bytes32 => struct RanceProtocol.ReferralReward)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_string_memory_ptr,t_address)": {
+            "label": "mapping(string => address)",
+            "numberOfBytes": "32"
+          },
+          "t_string_memory_ptr": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Package)4500_storage": {
+            "label": "struct RanceProtocol.Package",
+            "members": [
+              {
+                "label": "user",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "planId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "packageId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "initialDeposit",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "insureOutput",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "startTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "endTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "isCancelled",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "isWithdrawn",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "7"
+              },
+              {
+                "label": "insureCoin",
+                "type": "t_address",
+                "offset": 2,
+                "slot": "7"
+              },
+              {
+                "label": "paymentToken",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "8"
+              }
+            ],
+            "numberOfBytes": "288"
+          },
+          "t_struct(PackagePlan)4477_storage": {
+            "label": "struct RanceProtocol.PackagePlan",
+            "members": [
+              {
+                "label": "planId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "periodInSeconds",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "insuranceFee",
+                "type": "t_uint8",
+                "offset": 4,
+                "slot": "1"
+              },
+              {
+                "label": "uninsureFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isActivated",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(ReferralReward)4515_storage": {
             "label": "struct RanceProtocol.ReferralReward",
             "members": [
               {
